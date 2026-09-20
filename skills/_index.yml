@@ -1,0 +1,27 @@
+generated: '2026-09-19'
+method: generated
+source: >-
+  Grounded in openapi/ingest0r-com-openapi.yml (operationIds v1_search, v1_parcel, v1_dossier, v1_comps — each
+  grepped in the spec), the live MCP tools/list (mcp/ingest0r-com-tools-list.json), the provider's own recommended
+  flow (MCP server instructions, llms.txt, /v1/sample how_to_pay) and the conventions/errors artifacts. The
+  provider ships no skills or AGENTS.md of its own (/AGENTS.md, /skills.json, /.well-known/skills.json all 404).
+  Nothing was purchased while writing these: every step was exercised on the free surface only.
+skills:
+- file: ingest0r-com-evaluate-before-paying.md
+  name: Evaluate the Cook County property data for free before paying
+  api: openapi/ingest0r-com-openapi.yml
+  operations: [v1_search, v1_dossier]
+  mcp_tools: [get_free_sample, search_chicago_property_by_address, get_cook_county_property_dossier]
+  cost: free
+- file: ingest0r-com-address-to-dossier.md
+  name: Resolve a Chicago address to its parcel and pull the full property dossier
+  api: openapi/ingest0r-com-openapi.yml
+  operations: [v1_search, v1_parcel, v1_dossier]
+  mcp_tools: [search_chicago_property_by_address, get_cook_county_parcel, get_cook_county_property_dossier]
+  cost: free within the 25-call daily allowance; then $0.01 (parcel) / $0.03 (dossier) via x402
+- file: ingest0r-com-comps-and-valuation.md
+  name: Get comparable sales and an implied value range for a Cook County property
+  api: openapi/ingest0r-com-openapi.yml
+  operations: [v1_search, v1_comps]
+  mcp_tools: [search_chicago_property_by_address, find_chicago_comparable_sales]
+  cost: free within the 25-call daily allowance; then $0.10 via x402

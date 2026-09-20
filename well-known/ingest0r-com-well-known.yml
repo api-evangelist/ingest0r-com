@@ -1,0 +1,130 @@
+generated: '2026-09-19'
+method: probed
+source: >-
+  Live GET probes of the named /.well-known/* path list on api.ingest0r.com (the API host, OpenAPI servers[] host,
+  MCP host and website — one host), plus the apex ingest0r.com and www.ingest0r.com, 2026-09-19. Every row is a
+  request that was issued; every status is the one returned.
+summary:
+  hosts_probed: 3
+  hosts_resolving: 1
+  paths_probed: 27
+  documents_served: 6
+  hit_count: 6
+  negative_control: passed
+  note: >-
+    api.ingest0r.com serves six real well-known documents — an RFC 9116 security.txt (Contact, Expires, Canonical,
+    Preferred-Languages; no Policy line), an A2A agent card at both the canonical and legacy paths, an MCP server
+    manifest at /.well-known/mcp.json (and the same body at /.well-known/mcp), and an x402 v2 resource list at
+    /.well-known/x402 — and links them from the root manifest's HTTP Link header, agents.txt, llms.txt and
+    sitemap.xml. No OAuth/OIDC discovery and no RFC 9728 protected-resource metadata: the MCP server and the API
+    take no credential (x402 payment past a free allowance), so none is expected. No RFC 9727 api-catalog, no
+    APIs.json at any of the three paths, no AAuth resource, no ai-plugin, no UCP/ACP. Every miss is the origin's
+    own JSON 404 ({"error":"not_found"}, 42 bytes) and a negative-control path 404s the same way, so the hits are
+    served documents. The apex and www have no A record (NXDOMAIN); the Website pointer inherited from the harvest
+    stub (https://ingest0r.com/) was dead on arrival and has been replaced with the API host, which serves an
+    HTML landing page to browsers.
+hosts:
+- host: api.ingest0r.com
+  role: API base (OpenAPI servers[0]), A2A card host, MCP server host, website
+  documents:
+  - path: /.well-known/security.txt
+    status: 200
+    content_type: text/plain; charset=utf-8
+    bytes: 155
+    file: ingest0r-com-security.txt
+    standard: RFC 9116
+    note: >-
+      Contact mailto:hyperionxmota@gmail.com, Canonical, Preferred-Languages en. No Policy, Encryption or
+      Acknowledgments line. Expires is generated relative to the request (2027-09-20T00:35:33Z, one year after
+      fetch) rather than a fixed date.
+  - path: /security.txt
+    status: 200
+    content_type: text/plain; charset=utf-8
+    bytes: 155
+    note: Same body at the legacy root path.
+  - path: /.well-known/agent-card.json
+    status: 200
+    content_type: application/json
+    bytes: 10720
+    file: ../a2a/ingest0r-com-agent-card.json
+    standard: A2A Agent Card (protocolVersion 0.3.0; graded near-conformant by the catalog grader)
+    note: Canonical path. Saved verbatim under a2a/ and graded in a2a/ingest0r-com-a2a.yml.
+  - path: /.well-known/agent.json
+    status: 200
+    content_type: application/json
+    bytes: 10720
+    file: ../a2a/ingest0r-com-agent-card.json
+    note: Legacy pre-0.3 path; byte-identical to the canonical document. Not saved twice.
+  - path: /.well-known/mcp.json
+    status: 200
+    content_type: application/json
+    bytes: 454
+    file: ingest0r-com-mcp.json
+    standard: MCP server manifest (servers[] with name, description, transport streamable-http, url)
+    note: Names the live server at https://api.ingest0r.com/mcp; see mcp/ingest0r-com-mcp.yml.
+  - path: /.well-known/mcp
+    status: 200
+    content_type: application/json
+    bytes: 454
+    note: Same body without the extension.
+  - path: /.well-known/x402
+    status: 200
+    content_type: application/json
+    bytes: 7858
+    file: ingest0r-com-x402.json
+    standard: x402 v2 resource list (x402Version 2, serviceVersion 0.4.2, items[] with resource, method, price, accepts[], inputSchema, outputSchema)
+    note: Not on the closed probe list; fetched because the root manifest's Link header names it rel="payment-terms".
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+    note: The MCP server and API take no OAuth credential (x402 past a free allowance); no RFC 9728 metadata is expected or served.
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/api-catalog.json
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/ucp.json
+    status: 404
+  - path: /.well-known/acp.json
+    status: 404
+  - path: /.well-known/aauth-resource.json
+    status: 404
+  - path: /.well-known/apis.json
+    status: 404
+  - path: /apis.json
+    status: 404
+  - path: /apis.yml
+    status: 404
+  - path: /llms.txt
+    status: 200
+    note: Saved to llms/ingest0r-com-llms.txt.
+  - path: /robots.txt
+    status: 200
+    note: 'Allow: /; Sitemap: https://api.ingest0r.com/sitemap.xml; comment points at llms.txt and llms-full.txt.'
+  - path: /agents.txt
+    status: 200
+    note: Plain-text agent discovery pointers (A2A, x402, OpenAPI, MCP, llms, pricing, sample). Not a standard; recorded as evidence.
+  - path: /.well-known/apievangelist-negative-control-7f3a91.json
+    status: 404
+    note: Negative control. The origin 404s an impossible path with the same JSON body, so the 200s above are served documents.
+- host: ingest0r.com
+  role: Registrable domain (apex)
+  resolves: false
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 0
+    note: NXDOMAIN — no A/AAAA record. Cloudflare NS and SOA exist; DMARC (p=quarantine) is published, SPF is not.
+  - path: /.well-known/security.txt
+    status: 0
+    note: NXDOMAIN.
+- host: www.ingest0r.com
+  role: www
+  resolves: false
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 0
+    note: NXDOMAIN.

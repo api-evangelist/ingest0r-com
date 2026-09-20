@@ -1,4 +1,4 @@
-# independent
+# ingest0r
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -64,5 +64,19 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-independent is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry) and added to the network as a stub for full-pipeline profiling.
-- https://ingest0r.com/
+ingest0r operates the Cook County (Chicago) property records API at https://api.ingest0r.com — a pay-per-call,
+agent-native REST API over Cook County, Illinois public records (~1.9M parcels, refreshed nightly): address to
+parcel PIN, parcel details, recorded sales and deed history, building permits linked to the PIN, assessment
+history and comparable-sales valuation. No signup and no API key; address search and a sample are always free, the
+first 25 PIN-route calls per client per day are free, and past that the routes answer HTTP 402 and settle per call
+in USDC (x402, Base or Solana). The provider publishes an OpenAPI 3.1, an A2A agent card, a live MCP server, an
+llms.txt, an x402 resource list, a machine-readable price card and changelog, and a security.txt — all on the API
+host, because the apex ingest0r.com has no DNS A record. The operator identifies itself only as "independent".
+
+- Website / discovery manifest: https://api.ingest0r.com/
+- OpenAPI: https://api.ingest0r.com/openapi.json
+- A2A agent card: https://api.ingest0r.com/.well-known/agent-card.json
+- MCP endpoint: https://api.ingest0r.com/mcp
+- llms.txt: https://api.ingest0r.com/llms.txt
+- Pricing: https://api.ingest0r.com/pricing
+- Changelog: https://api.ingest0r.com/changelog.json

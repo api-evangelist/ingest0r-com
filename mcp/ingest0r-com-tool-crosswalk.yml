@@ -1,0 +1,78 @@
+generated: '2026-09-19'
+method: derived
+source: >-
+  Derived by aligning the LIVE MCP tools/list (mcp/ingest0r-com-tools-list.json, fetched anonymously from
+  https://api.ingest0r.com/mcp on 2026-09-19) with the provider's OpenAPI 3.1 (openapi/ingest0r-com-openapi.yml,
+  4 operations) and the A2A agent card's five skills. Nothing here is gated: every surface answered without a
+  credential, so each binding is read directly from the tool description and the route it names.
+purpose: >-
+  Bind each MCP tool to the REST operationId that backs it so the tool inherits the operation's real parameter
+  contract, response schema, price and error set, and record where the MCP, REST and A2A projections diverge.
+surfaces:
+  rest_openapi: openapi/ingest0r-com-openapi.yml
+  rest_operations: 4
+  mcp: https://api.ingest0r.com/mcp
+  mcp_tools_list: open (anonymous tools/list returned 5 tools with inputSchema + annotations)
+  a2a_card: a2a/ingest0r-com-agent-card.json
+  a2a_skills: 5
+  graphql: null
+crosswalk:
+- tool: search_chicago_property_by_address
+  category: lookup
+  rest: [v1_search]
+  a2a_skill: v1_search
+  binding: rest
+  confidence: high
+  note: >-
+    Tool input `address` maps to the OpenAPI path parameter `q` (string, 4+ chars, trailing city/state/ZIP
+    stripped). Same output shape (query, normalized, match_quality, matches[]). Free on both surfaces.
+- tool: get_cook_county_parcel
+  category: record
+  rest: [v1_parcel]
+  a2a_skill: v1_parcel
+  binding: rest
+  confidence: high
+  note: Tool input `pin` = path parameter `pin` (10 or 14 digits, dashes ok). $0.01 past the free allowance on both surfaces.
+- tool: get_cook_county_property_dossier
+  category: record
+  rest: [v1_dossier]
+  a2a_skill: v1_dossier
+  binding: rest
+  confidence: high
+  note: Tool input `pin` = path parameter `pin`. $0.03 past the free allowance on both surfaces.
+- tool: find_chicago_comparable_sales
+  category: valuation
+  rest: [v1_comps]
+  a2a_skill: v1_comps
+  binding: rest
+  confidence: high
+  note: Tool input `pin` = path parameter `pin`. $0.10 past the free allowance on both surfaces.
+mcp_only:
+- tool: get_free_sample
+  a2a_skill: v1_sample
+  reason: >-
+    Backed by GET https://api.ingest0r.com/v1/sample (200, free, fixed fixture), which the OpenAPI does not
+    describe. The route exists and is linked from llms.txt, pricing, sitemap.xml and the agent card, so this is an
+    OpenAPI coverage gap rather than an MCP-only capability.
+rest_only: []
+divergences:
+- surface: payment
+  note: >-
+    REST signals payment with HTTP 402 + PAYMENT-REQUIRED header + JSON body; MCP surfaces the same 402 inside
+    the tool result under _meta["x402/error"] with isError, and accepts payment via _meta["x402/payment"]
+    (changelog 0.4.1). Same prices, same rails.
+- surface: free-tier signal
+  note: >-
+    REST reports the allowance in response headers (X-Free-Tier, X-Free-Tier-Limit, X-Free-Tier-Remaining —
+    observed live: true / 25 / 24); MCP reports it under _free_tier in the tool result per the server
+    instructions. Always-free calls and the example PINs are unmetered on both.
+- surface: parameter naming
+  note: The address-search tool calls its argument `address`; the REST path parameter and the A2A skill input schema call it `q`.
+coverage:
+  tools_named: 5
+  tools_bound_to_rest: 4
+  mcp_only: 1
+  rest_operations_total: 4
+  rest_operations_with_tool: 4
+  a2a_skills_total: 5
+  a2a_skills_with_tool: 5

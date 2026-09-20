@@ -1,0 +1,90 @@
+generated: '2026-09-19'
+method: searched
+source:
+- https://api.ingest0r.com/openapi.json (4xx/5xx responses on every operation)
+- https://api.ingest0r.com/llms-full.txt ("Errors (all 4xx are self-describing JSON)")
+- live GET probes of api.ingest0r.com, 2026-09-19
+derived_from: openapi/ingest0r-com-openapi.yml
+docs: https://api.ingest0r.com/llms.txt
+format: custom
+envelope:
+  media_type: application/json
+  shape: '{ "error": <stable machine-readable code>, "detail": <how to fix the request, in prose> }'
+  extra_fields: The 404 body also echoes the requested pin; the 402 body is an x402 v2 PaymentRequired object instead of this envelope.
+  rfc9457: false
+  note: >-
+    Verbatim from the spec: error is a "stable machine-readable code", detail is "how to fix the request, in
+    prose". The detail strings observed live tell the caller which route to use next (e.g. resolve an address
+    with GET /v1/search/{q} first), so they are actionable for an agent.
+consistency_gap: >-
+  The 402 response has no schema in the OpenAPI (description only) and is not the {error, detail} envelope — it
+  is the x402 PaymentRequired object, duplicated base64-encoded in the PAYMENT-REQUIRED header. The 5xx surface is
+  a single documented 503 (capacity shed); no 500 is documented. Unknown paths return the same envelope with
+  error not_found and HTTP 404 (observed on every /.well-known miss).
+problem_types:
+- status: 400
+  code: query_too_short
+  title: Query too short
+  operations: [v1_search]
+  detail: send at least 4 characters of a street address.
+  observed_body: '{"error":"query_too_short","detail":"Provide at least 4 characters of a street address, e.g. /v1/search/1%20E%20113th%20St."}'
+  remediation: Lengthen the address fragment to 4+ characters; a trailing city/state/ZIP is fine and is stripped.
+  retryable: false
+- status: 400
+  code: invalid_pin
+  title: Invalid PIN
+  operations: [v1_parcel, v1_dossier, v1_comps]
+  detail: PIN must be 14 digits (or the 10-digit form, dashed or not).
+  observed_body: '{"error":"invalid_pin","detail":"Provide a 14-digit Cook County PIN (digits or dashed form). If you have a street address instead of a PIN, resolve it first: GET /v1/search/{q} (FREE) returns candidate PINs."}'
+  remediation: Pass a 10- or 14-digit Cook County PIN (dashes allowed, e.g. 14-08-120-017-0000); resolve an address with v1_search first.
+  retryable: false
+- status: 402
+  code: Payment required
+  title: Payment Required (x402)
+  operations: [v1_parcel, v1_dossier, v1_comps]
+  detail: >-
+    Returned only past the daily free allowance of 25 calls per client, and always on the route-template URLs and
+    the directory-probe PINs. Body is an x402 v2 PaymentRequired object (x402Version, error, resource, accepts[],
+    extensions.bazaar, free_sample); the same object is base64-encoded in the PAYMENT-REQUIRED response header.
+  observed_body: '{"x402Version":2,"error":"Payment required","resource":{"url":"https://api.ingest0r.com/v1/parcel/{pin}"},"accepts":[{"scheme":"exact","network":"eip155:8453","asset":"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913","amount":"10000","payTo":"0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B","maxTimeoutSeconds":60,...},{"scheme":"exact","network":"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",...}],"extensions":{"bazaar":{...}},"free_sample":"https://api.ingest0r.com/v1/sample"}'
+  remediation: >-
+    Pay the quoted atomic USDC amount (10000 = $0.01 parcel, 30000 = $0.03 dossier, 100000 = $0.10 comps) on
+    Base or Solana via an x402 client and retry with the payment header (PAYMENT-SIGNATURE, or legacy X-PAYMENT).
+    Or wait for the allowance to reset at 00:00 UTC. HEAD requests never settle a payment.
+  retryable: true
+- status: 404
+  code: not_found
+  title: Not found
+  operations: [v1_parcel, v1_dossier, v1_comps]
+  detail: well-formed PIN that is not in the Cook County parcel universe (coverage is Cook County only).
+  observed_body: '{"error":"not_found","pin":"00000000000000","detail":"PIN not present in the current Cook County parcel universe (coverage is Cook County, IL only). If you have a street address instead of a PIN, resolve it first: GET /v1/search/{q} (FREE) returns candidate PINs."}'
+  remediation: Confirm the PIN via v1_search; the API covers Cook County, Illinois only.
+  retryable: false
+- status: 404
+  code: not_found
+  title: Unknown path
+  operations: []
+  detail: Any path the service does not serve (observed on 20+ /.well-known and discovery misses).
+  observed_body: '{"error":"not_found"}'
+  remediation: Consult the root discovery manifest or llms.txt for the served routes.
+  retryable: false
+- status: 429
+  code: rate_limited
+  title: Rate limited
+  operations: [v1_search, v1_parcel, v1_dossier, v1_comps]
+  detail: per-IP limit; honor the Retry-After header (60s) and retry.
+  remediation: Back off for the Retry-After value (60 seconds documented). Published ceiling 120 requests per minute per IP.
+  retryable: true
+  observed: false
+- status: 503
+  code: busy
+  title: Busy (capacity shed)
+  operations: [v1_search, v1_parcel, v1_dossier, v1_comps]
+  detail: capacity shed, retryable; honor Retry-After (2s). Not a failure of the request itself.
+  remediation: Retry after the Retry-After value (2 seconds documented) with backoff.
+  retryable: true
+  observed: false
+mcp_error_surface:
+  note: >-
+    On the MCP server the same 402 is returned inside the tool result as _meta["x402/error"] with isError true
+    (changelog 0.4.1); other REST errors are surfaced as tool errors. Not exercised past tools/list and initialize.

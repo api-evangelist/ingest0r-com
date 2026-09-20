@@ -1,0 +1,101 @@
+generated: '2026-09-19'
+method: searched
+source:
+- https://api.ingest0r.com/openapi.json
+- https://api.ingest0r.com/llms-full.txt
+- https://api.ingest0r.com/changelog.json
+- https://api.ingest0r.com/pricing
+- live responses observed on api.ingest0r.com, 2026-09-19
+derived_from: openapi/ingest0r-com-openapi.yml
+docs:
+- https://api.ingest0r.com/llms.txt
+base_url: https://api.ingest0r.com
+api_style: REST over HTTPS, path-parameter GETs only, JSON responses; q-value-aware content negotiation on the root (HTML for browsers, JSON otherwise)
+media_type: application/json
+surface_note: >-
+  A four-operation, read-only API. Every convention below is either stated in the provider's OpenAPI, llms-full,
+  changelog or pricing documents, or was observed on a live unauthenticated response. Where the provider is
+  silent the value is an honest undocumented/na, not a guess.
+auth:
+  style: none — credential-free; x402 payment (HTTP 402 -> pay USDC on Base/Solana -> retry with PAYMENT-SIGNATURE) only past a daily free allowance on the three PIN routes
+  detail: authentication/ingest0r-com-authentication.yml
+idempotency:
+  supported: null
+  coverage: na
+  mechanism: null
+  header: null
+  scope: []
+  retention: null
+  description: >-
+    Not applicable: the API has no write surface. All four operations are GET; every MCP tool is annotated
+    readOnlyHint true, destructiveHint false, idempotentHint true. The only side effect a call can have is an
+    on-chain USDC micropayment, and the provider documents replay protection for that on its side — payment-header
+    guards with a "replay pre-check" and "HEAD never settles a payment" (changelog 0.4.0/0.4.1) — so a retried
+    request cannot be double-charged from the same payment. Recorded na rather than none because there is no
+    mutating operation for an idempotency key to protect.
+dry_run_mode:
+  supported: null
+  grade: na
+  description: >-
+    Not applicable to a read-only API. The provider does offer the equivalent for its one costly action (paying):
+    a free fixed sample (GET /v1/sample), three always-free live example PINs, a 25-call daily free allowance on the
+    paid routes, and a 402 challenge that can be inspected without paying. See sandbox/ingest0r-com-sandbox.yml.
+reversibility:
+  grade: na
+  write_surfaces: []
+  description: >-
+    No write surface: nothing an agent does through this API creates, changes or deletes state at the provider,
+    so there is nothing to reverse. The one irreversible act is the x402 micropayment itself ($0.01–$0.10 per
+    call, settled on-chain); no refund path or window is published, and none is asserted here. An agent should
+    treat the free allowance and the sample as the rehearsal and the payment as final.
+pagination:
+  style: none
+  description: No list endpoint. v1_search returns a bounded ranked matches[] array with no page/cursor/limit parameter documented; the other three routes return one record.
+field_expansion:
+  supported: false
+  description: No expand/fields/include parameters. Depth is chosen by route — parcel ($0.01) vs dossier ($0.03) — rather than by parameter.
+metadata:
+  supported: false
+provenance:
+  fields: [as_of, source, cite]
+  description: 'Verbatim (llms-full "Provenance"): "Every paid answer carries as_of (nightly refresh timestamp), source attribution, and a canonical cite URL." Observed on free answers too (search and metered parcel).'
+request_tracing:
+  request_id_header: undocumented
+  description: No request-id header documented or observed; responses carry cf-ray from the Cloudflare edge only.
+versioning:
+  scheme: URL path major version (/v1) + X-Schema-Version response header (semantic, additive-only)
+  current: 0.4.2
+  header: X-Schema-Version
+  policy: additive-only within /v1; breaking changes ship as /v2 with /v1 kept alive
+  detail: lifecycle/ingest0r-com-lifecycle.yml
+  changelog: changelog/ingest0r-com-changelog.yml
+error_envelope:
+  media_type: application/json
+  rfc9457: false
+  shape: '{ "error": <stable code>, "detail": <prose fix> }'
+  codes: [query_too_short, invalid_pin, not_found, rate_limited, busy]
+  payment_required: 'HTTP 402 with an x402 v2 PaymentRequired JSON body and the same object base64-encoded in the PAYMENT-REQUIRED header'
+  detail: errors/ingest0r-com-problem-types.yml
+rate_limit_signaling:
+  scope: per-ip
+  limit: 120 requests per minute
+  exhaustion_status: 429
+  retry_after: 60s on 429; 2s on 503 (capacity shed)
+  headers: [Retry-After]
+  free_tier_headers: [X-Free-Tier, X-Free-Tier-Limit, X-Free-Tier-Remaining]
+  detail: rate-limits/ingest0r-com-rate-limits.yml
+caching:
+  description: Discovery documents (root, openapi, card, llms, pricing) carry ETag and cache-control max-age=3600 (private on the root, public on example dossiers); metered answers are private, no-store; 402s are private, no-store.
+http_methods:
+  head: 'Supported on the routes; "HEAD requests never settle a payment" (changelog 0.4.0).'
+  post_root: 'POST / answers JSON-RPC (changelog 0.4.0); the MCP endpoint is /mcp.'
+identifiers:
+  pin: 14-digit Cook County PIN (10-digit form accepted, dashes ok); resolve an address with v1_search first
+  coverage: Cook County, Illinois only — a well-formed PIN outside the county is a 404 not_found
+other_conventions:
+- name: Free-first flow
+  detail: The provider's own recommended order (MCP instructions, llms.txt, sample how_to_pay) is sample -> search -> parcel/dossier/comps, using the free allowance before any payment.
+- name: Match quality
+  detail: 'v1_search match_quality is exact | likely | weak | none; the spec says only "exact" is certain and "weak" means no candidate shares the house number — "do not rely on it".'
+- name: No personal data
+  detail: 'Verbatim (pricing terms.privacy): "Property-keyed only. No owner, buyer, seller or occupant names are stored on any serving path or logged."'

@@ -1,0 +1,4 @@
+Contact: mailto:hyperionxmota@gmail.com
+Expires: 2027-09-20T00:35:33Z
+Canonical: https://api.ingest0r.com/.well-known/security.txt
+Preferred-Languages: en

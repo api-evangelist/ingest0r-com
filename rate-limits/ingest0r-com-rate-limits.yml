@@ -1,0 +1,65 @@
+generated: '2026-09-19'
+method: searched
+source:
+- https://api.ingest0r.com/pricing (rate_limit.requests_per_minute)
+- https://api.ingest0r.com/.well-known/agent-card.json (x-rate-limit)
+- https://api.ingest0r.com/openapi.json (429 and 503 response descriptions)
+- live responses observed 2026-09-19 (free-tier headers)
+docs: https://api.ingest0r.com/llms-full.txt
+limit_count: 2
+summary: >-
+  One published request ceiling — 120 requests per minute, enforced per IP, answered with HTTP 429
+  {"error":"rate_limited"} and a Retry-After of 60 seconds — plus a documented capacity-shed 503 {"error":"busy"}
+  with Retry-After 2 seconds that the spec says is "not a failure of the request itself". Separately, the three
+  PIN routes carry a metered daily free allowance of 25 calls per client, signalled on every metered 200 by
+  X-Free-Tier / X-Free-Tier-Limit / X-Free-Tier-Remaining (observed live: true / 25 / 24); exhausting it produces a
+  402 payment challenge, not a 429. No RateLimit-* or X-RateLimit-* headers are documented on ordinary responses,
+  and none were observed. Neither the 429 nor the 503 was triggered during this pass.
+rate_limits:
+- name: Per-IP request ceiling
+  scope: per-ip
+  window: 1 minute
+  limit: 120
+  burst: undocumented
+  applies_to: [v1_search, v1_parcel, v1_dossier, v1_comps]
+  exhaustion_status: 429
+  exhaustion_body: '{"error":"rate_limited","detail":"..."}'
+  retry_after_seconds: 60
+  source: https://api.ingest0r.com/pricing
+- name: Daily free allowance (PIN routes)
+  scope: per-client
+  window: 1 day (resets 00:00 UTC)
+  limit: 25
+  applies_to: [v1_parcel, v1_dossier, v1_comps]
+  exhaustion_status: 402
+  exhaustion_body: x402 v2 PaymentRequired object (see errors/ingest0r-com-problem-types.yml)
+  note: Not a rate limit in the throttling sense — a metered free quota after which the same call is payable. The metering key "per client" is not defined further.
+  source: https://api.ingest0r.com/changelog.json (0.4.2)
+signaling:
+  exhaustion_status: 429
+  response_headers:
+  - name: Retry-After
+    documented: true
+    on: [429 (60s), 503 (2s)]
+  - name: X-Free-Tier
+    documented: true
+    observed: 'true'
+    on: metered 200s on the PIN routes
+  - name: X-Free-Tier-Limit
+    documented: true
+    observed: '25'
+  - name: X-Free-Tier-Remaining
+    documented: true
+    observed: '24'
+  - name: X-RateLimit-Limit / X-RateLimit-Remaining / RateLimit
+    documented: false
+    observed: absent
+  client_guidance: 'Verbatim (OpenAPI 429): "per-IP limit; honor the Retry-After header (60s) and retry." (503): "busy — capacity shed, retryable; honor Retry-After (2s)."'
+observed:
+  note: >-
+    GET /v1/parcel/25221090340000 (one metered free call) returned 200 with x-free-tier: true, x-free-tier-limit:
+    25, x-free-tier-remaining: 24 and cache-control private, no-store. GET /v1/dossier/09253050270000 (always-free
+    example PIN) returned x-free-example: true and NO free-tier counters — the example PINs are unmetered as
+    documented. Discovery documents carry cache-control private/public max-age=3600 and ETags.
+domains:
+- api.ingest0r.com

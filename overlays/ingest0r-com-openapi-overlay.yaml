@@ -1,0 +1,93 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the Cook County (Chicago) property records API
+  version: 1.0.0
+  description: >-
+    Non-destructive enhancements to the provider's OpenAPI 3.1 (openapi/ingest0r-com-openapi.yml, verbatim copy in
+    openapi/_original/ingest0r-com-openapi.json). Adds tags the spec lacks, links the provider's own discovery
+    documents, and records the live-observed free-tier and rate-limit headers. Generated 2026-09-19; the original is
+    never mutated.
+extends: openapi/ingest0r-com-openapi.yml
+actions:
+- target: $.info
+  update:
+    x-apievangelist-profile: https://github.com/api-evangelist/ingest0r-com
+    x-apievangelist-generated: '2026-09-19'
+    x-discovery:
+      agent_card: https://api.ingest0r.com/.well-known/agent-card.json
+      mcp: https://api.ingest0r.com/mcp
+      x402_resources: https://api.ingest0r.com/.well-known/x402
+      llms: https://api.ingest0r.com/llms.txt
+      pricing: https://api.ingest0r.com/pricing
+      changelog: https://api.ingest0r.com/changelog.json
+- target: $
+  update:
+    tags:
+    - name: Search
+      description: Address to parcel PIN resolution (always free).
+    - name: Parcels
+      description: Single parcel records by PIN.
+    - name: Dossiers
+      description: Full property records — sales, permits, assessments.
+    - name: Comparable Sales
+      description: Comps and implied valuation range.
+- target: $.paths['/v1/search/{q}'].get
+  update:
+    tags: [Search]
+- target: $.paths['/v1/parcel/{pin}'].get
+  update:
+    tags: [Parcels]
+- target: $.paths['/v1/dossier/{pin}'].get
+  update:
+    tags: [Dossiers]
+- target: $.paths['/v1/comps/{pin}'].get
+  update:
+    tags: [Comparable Sales]
+- target: $.paths.*.get.responses['200']
+  update:
+    headers:
+      X-Schema-Version:
+        description: Current additive-only schema version (observed 0.4.2).
+        schema: {type: string}
+- target: $.paths['/v1/parcel/{pin}'].get.responses['200']
+  update:
+    headers:
+      X-Free-Tier:
+        description: 'true when the answer was served from the daily free allowance (observed live 2026-09-19).'
+        schema: {type: string}
+      X-Free-Tier-Limit:
+        description: Daily free allowance per client (observed 25).
+        schema: {type: integer}
+      X-Free-Tier-Remaining:
+        description: Free calls left today across the PIN routes (observed 24 after one call).
+        schema: {type: integer}
+- target: $.paths['/v1/dossier/{pin}'].get.responses['200']
+  update:
+    headers:
+      X-Free-Tier: {description: 'true when served from the daily free allowance.', schema: {type: string}}
+      X-Free-Tier-Limit: {description: Daily free allowance per client (25)., schema: {type: integer}}
+      X-Free-Tier-Remaining: {description: Free calls left today., schema: {type: integer}}
+- target: $.paths['/v1/comps/{pin}'].get.responses['200']
+  update:
+    headers:
+      X-Free-Tier: {description: 'true when served from the daily free allowance.', schema: {type: string}}
+      X-Free-Tier-Limit: {description: Daily free allowance per client (25)., schema: {type: integer}}
+      X-Free-Tier-Remaining: {description: Free calls left today., schema: {type: integer}}
+- target: $.paths.*.get.responses['402']
+  update:
+    headers:
+      PAYMENT-REQUIRED:
+        description: Base64-encoded x402 v2 PaymentRequired object (observed live 2026-09-19 on a route-template URL); the same object is the JSON body.
+        schema: {type: string}
+- target: $.paths.*.get.responses['429']
+  update:
+    headers:
+      Retry-After:
+        description: Seconds to wait (documented 60).
+        schema: {type: integer}
+- target: $.paths.*.get.responses['503']
+  update:
+    headers:
+      Retry-After:
+        description: Seconds to wait (documented 2).
+        schema: {type: integer}

@@ -1,23 +1,230 @@
 aid: ingest0r-com
-name: independent
-description: 'independent is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry)
-  and added to the network as a stub for full-pipeline profiling.'
+name: ingest0r
+description: >-
+  ingest0r operates the Cook County (Chicago) property records API at api.ingest0r.com — a pay-per-call,
+  agent-native REST API over Cook County, Illinois public records (~1.9M parcels, refreshed nightly) that resolves
+  a street address to its parcel PIN, then returns parcel details, recorded sales and deed history, building
+  permits linked to the PIN, property-tax assessment history and comparable-sales valuation as one joined answer.
+  There is no signup and no API key: address search and a fixed sample are always free, the first 25 PIN-route
+  calls per client per day return real data free, and past that the routes answer HTTP 402 and are settled per call
+  in USDC on Base or Solana through the x402 protocol ($0.01, $0.03 and $0.10). The provider publishes an OpenAPI
+  3.1, an A2A agent card, a live streamable-HTTP MCP server with five tools, llms.txt, an x402 resource list, a
+  machine-readable price card and changelog, and a security.txt — all on api.ingest0r.com. The operator
+  identifies itself only as "independent" (the agent card's provider.organization) with a personal contact
+  address; the apex ingest0r.com has no DNS A record, so the API host is the website.
 url: https://raw.githubusercontent.com/api-evangelist/ingest0r-com/refs/heads/main/apis.yml
+image: https://api.ingest0r.com/favicon.svg
 x-type: company
 x-source: harvest:a2a-registry
-x-tier: stub
-x-tier-reason: harvest
+x-tier: profiled
+x-tier-reason: enrichment pass 2026-09-19 (local-v3) on the a2a-registry harvest stub
 specificationVersion: '0.20'
 created: '2026-09-19'
 modified: '2026-09-19'
 tags:
 - Company
-apis: []
+- Real Estate
+- Property Records
+- Property Data
+- Public Records
+- Open Data
+- Government Data
+- Parcels
+- Geocoding
+- Property Tax
+- Building Permits
+- Comparable Sales
+- Valuation
+- x402
+- Agent Commerce
+- MCP
+- A2A
+- agent-native
+- Chicago
+- Illinois
+apis:
+- aid: ingest0r-com:cook-county-property-records-api
+  name: Cook County (Chicago) Property Records API
+  description: >-
+    Four GET operations on https://api.ingest0r.com described by the provider's OpenAPI 3.1 (version 0.4.2):
+    v1_search resolves a full or partial street address to ranked parcel PINs with a match_quality flag (always
+    free); v1_parcel returns one parcel record by PIN with the street address joined in ($0.01); v1_dossier returns
+    the full property record — parcel basics plus recorded sales and deed history, building permits linked to the
+    PIN, and assessment history ($0.03); v1_comps returns arm's-length comparable sales over 18 months with an
+    implied low/median/high valuation range ($0.10). No API key: the first 25 paid-route calls per client per day
+    are free (X-Free-Tier-Remaining header), then the route answers HTTP 402 with x402 v2 terms (USDC on Base
+    eip155:8453 or Solana) and is retried with the payment. Every answer carries as_of, source and cite provenance
+    fields and an X-Schema-Version header; the schema is additive-only within /v1. Errors are self-describing JSON
+    {error, detail}; 429 per-IP at 120 requests/minute with Retry-After 60s. Coverage is Cook County, Illinois
+    only; property-keyed public records with no owner or occupant names.
+  humanURL: https://api.ingest0r.com/
+  baseURL: https://api.ingest0r.com
+  tags:
+  - Real Estate
+  - Property Records
+  - Parcels
+  - Geocoding
+  - Building Permits
+  - Comparable Sales
+  - x402
+  - agent-native
+  properties:
+  - type: OpenAPI
+    url: openapi/ingest0r-com-openapi.yml
+  - type: OpenAPI
+    name: OpenAPI 3.1 (provider-hosted, per-route x-payment-info)
+    url: https://api.ingest0r.com/openapi.json
+  - type: Documentation
+    name: llms.txt (the provider's primary documentation)
+    url: https://api.ingest0r.com/llms.txt
+  - type: APIReference
+    name: Discovery manifest (schemas, prices, example flow)
+    url: https://api.ingest0r.com/
+  - type: Pricing
+    url: https://api.ingest0r.com/pricing
+  - type: ChangeLog
+    url: https://api.ingest0r.com/changelog.json
+  - type: AgentCard
+    url: a2a/ingest0r-com-a2a.yml
+  - type: Authentication
+    url: authentication/ingest0r-com-authentication.yml
+  - type: Plans
+    url: plans/ingest0r-com-plans-pricing.yml
+  - type: RateLimits
+    url: rate-limits/ingest0r-com-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/ingest0r-com-problem-types.yml
+  - type: Conventions
+    url: conventions/ingest0r-com-conventions.yml
+  - type: Sandbox
+    url: sandbox/ingest0r-com-sandbox.yml
+  - type: DataModel
+    url: data-model/ingest0r-com-data-model.yml
+  - type: Overlay
+    url: overlays/ingest0r-com-openapi-overlay.yaml
+- aid: ingest0r-com:cook-county-property-records-mcp-server
+  name: Cook County (Chicago) Property Records MCP Server
+  description: >-
+    A live remote MCP server at https://api.ingest0r.com/mcp (streamable-http, JSON-RPC 2.0 over HTTP POST,
+    protocol 2025-11-25, serverInfo cook-county-chicago-property-data 1.27.2) exposing five read-only tools:
+    get_free_sample ($0, fixed example of every response shape), search_chicago_property_by_address (always free),
+    get_cook_county_parcel ($0.01), get_cook_county_property_dossier ($0.03) and find_chicago_comparable_sales
+    ($0.10), each annotated readOnlyHint/idempotentHint true. tools/list answers anonymously — no OAuth, no API
+    key — and the first 25 paid-tool calls per client per day are free; past that the tool result carries the x402
+    402 under _meta["x402/error"] and accepts payment via _meta["x402/payment"] (agents-SDK x402 convention). The
+    server is also advertised at /.well-known/mcp.json. Each tool binds one-to-one to an OpenAPI operationId
+    (see the tool crosswalk).
+  humanURL: https://api.ingest0r.com/mcp
+  baseURL: https://api.ingest0r.com/mcp
+  tags:
+  - MCP
+  - Real Estate
+  - Property Records
+  - x402
+  - agent-native
+  properties:
+  - type: MCPServer
+    url: mcp/ingest0r-com-mcp.yml
+  - type: MCPServer
+    name: MCP endpoint (provider-hosted, streamable-http)
+    url: https://api.ingest0r.com/mcp
+  - type: ToolCrosswalk
+    url: mcp/ingest0r-com-tool-crosswalk.yml
+  - type: Documentation
+    url: https://api.ingest0r.com/llms.txt
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: VulnerabilityDisclosure
+  url: security/ingest0r-com-vulnerability-disclosure.yml
 - type: Website
-  url: https://ingest0r.com/
+  name: API host landing page (the apex ingest0r.com has no DNS A record)
+  url: https://api.ingest0r.com/
+- type: Documentation
+  url: https://api.ingest0r.com/llms.txt
+- type: Pricing
+  url: https://api.ingest0r.com/pricing
+- type: ChangeLog
+  name: Changelog (provider-hosted JSON)
+  url: https://api.ingest0r.com/changelog.json
+- type: AgentCard
+  url: a2a/ingest0r-com-a2a.yml
+- type: MCPServer
+  url: mcp/ingest0r-com-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/ingest0r-com-tool-crosswalk.yml
+- type: WellKnown
+  url: well-known/ingest0r-com-well-known.yml
+- type: SecurityTxt
+  url: well-known/ingest0r-com-security.txt
+- type: LLMsTxt
+  url: llms/ingest0r-com-llms.txt
+- type: Packages
+  url: packages/ingest0r-com-packages.yml
+- type: Overlay
+  url: overlays/ingest0r-com-openapi-overlay.yaml
+- type: Conformance
+  url: conformance/ingest0r-com-conformance.yml
+- type: ErrorCatalog
+  url: errors/ingest0r-com-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/ingest0r-com-lifecycle.yml
+- type: Deprecation
+  name: Additive-only /v1 compatibility policy with /v1 kept alive across a /v2 break (changelog.json)
+  url: lifecycle/ingest0r-com-lifecycle.yml
+- type: Authentication
+  url: authentication/ingest0r-com-authentication.yml
+- type: DomainSecurity
+  url: security/ingest0r-com-domain-security.yml
+- type: VulnerabilityDisclosure
+  url: security/ingest0r-com-vulnerability-disclosure.yml
+- type: Security
+  name: Vulnerability disclosure contact (RFC 9116 security.txt)
+  url: security/ingest0r-com-vulnerability-disclosure.yml
+- type: Sandbox
+  url: sandbox/ingest0r-com-sandbox.yml
+- type: Conventions
+  url: conventions/ingest0r-com-conventions.yml
+- type: ChangeLog
+  url: changelog/ingest0r-com-changelog.yml
+- type: DataModel
+  url: data-model/ingest0r-com-data-model.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: AgenticAccess
+  url: agentic-access/ingest0r-com-agentic-access.yml
+- type: Plans
+  url: plans/ingest0r-com-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/ingest0r-com-rate-limits.yml
+- type: Arazzo
+  name: Address to dossier and comps
+  url: arazzo/ingest0r-com-address-to-valuation-workflow.yml
+x-enrichment:
+  date: '2026-09-19'
+  status: enriched
+  artifacts_added: 36
+  pass: local-v3
+x-coverage:
+  state: covered
+  detail: >-
+    Every surface the provider publishes was fetched from its own host and verified live — OpenAPI 3.1, A2A agent
+    card (graded near-conformant), MCP server (initialize + tools/list answered anonymously), x402 v2 payment
+    challenge (observed, not settled), llms.txt, security.txt, machine-readable pricing and changelog — and the
+    free tier, 400 and 404 responses were exercised without payment; the only wall is that the apex ingest0r.com
+    has no DNS A record, so the API host is the website.
+  evidence:
+  - url: https://api.ingest0r.com/openapi.json
+    status: 200
+  - url: https://api.ingest0r.com/.well-known/agent-card.json
+    status: 200
+  - url: https://api.ingest0r.com/mcp
+    status: 200
+  - url: https://api.ingest0r.com/v1/parcel/%7Bpin%7D
+    status: 402
+  - url: https://ingest0r.com/
+    status: 0
+  checked: '2026-09-19'

@@ -1,0 +1,52 @@
+generated: '2026-09-19'
+method: searched
+source:
+- https://api.ingest0r.com/changelog.json
+- https://api.ingest0r.com/pricing (terms.sla, price_promise)
+- https://api.ingest0r.com/health and /healthz
+- https://api.ingest0r.com/openapi.json (info.version)
+docs: https://api.ingest0r.com/changelog.json
+versioning:
+  scheme: URL path major version (/v1) + semantic schema version
+  current: 0.4.2
+  header: X-Schema-Version
+  policy: >-
+    Verbatim (changelog.json "policy"): "Additive-only within /v1: existing fields never change type or meaning and
+    are never removed; new fields may appear. Breaking changes would ship as /v2 with /v1 kept alive. Current schema
+    version is sent on every response as X-Schema-Version."
+  observed: X-Schema-Version 0.4.2 on every 200 and 402 observed 2026-09-19; /health reports version 0.4.2; MCP serverInfo.version is 1.27.2 (a separate server build number).
+  detail: changelog/ingest0r-com-changelog.yml
+deprecation:
+  policy_url: https://api.ingest0r.com/changelog.json
+  policy_published: true
+  policy_kind: compatibility promise
+  sunset_header: false
+  deprecation_header: false
+  detail: >-
+    The published policy is that nothing in /v1 is removed or retyped and that a breaking change ships as /v2 with
+    /v1 kept alive — a no-deprecation commitment rather than a deprecation timeline. No Sunset (RFC 8594) or
+    Deprecation header is documented, no notice period for retiring /v1 is stated, and no operation is marked
+    deprecated in the OpenAPI. Prices carry their own notice rule: "Prices are fixed; any change is announced in
+    changelog.json at least 30 days ahead and never applies retroactively."
+  notice_period: null
+  notice_period_prices: at least 30 days ahead, never retroactive (verbatim)
+sla:
+  url: https://api.ingest0r.com/pricing
+  public_uptime_target: null
+  stated: >-
+    Verbatim (pricing terms.sla): "Best-effort, single region. No uptime guarantee. Liveness: GET /healthz. Data
+    refreshed nightly; every answer carries as_of."
+  data_freshness: nightly refresh; as_of on every answer (observed 2026-09-19T03:23:10-05:00)
+  warranty: 'Verbatim: "Provided as-is from public records. No warranty of accuracy, completeness or fitness for a particular purpose. Not affiliated with or endorsed by any government body. Not an appraisal, title report, or legal advice."'
+status_page: null
+status_page_note: >-
+  No status page. Liveness is GET /healthz (and /health), both 200 {"ok":true,"paid":true,"version":"0.4.2",
+  "free_tier_daily":25,"mcp":true}; /status 404. No StatusPage pointer is emitted.
+maturity:
+  stated: live, paid, v0.x schema
+  first_release: '2026-06-13 (0.1.0, "Initial public release")'
+  latest_release: '2026-08-19 (0.4.2)'
+  release_count: 6
+  evidence: Six dated changelog entries between 2026-06-13 and 2026-08-19; the domain is on Cloudflare nameservers; the surface is about three months old.
+changelog: https://api.ingest0r.com/changelog.json
+deprecated_operations: []

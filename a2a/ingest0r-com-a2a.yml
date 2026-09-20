@@ -1,0 +1,129 @@
+generated: '2026-09-19'
+method: probed
+source: https://api.ingest0r.com/.well-known/agent-card.json
+card:
+  file: ingest0r-com-agent-card.json
+  name: Cook County (Chicago) property records API
+  url: https://api.ingest0r.com
+  version: 0.4.2
+  skills: 5
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: api.ingest0r.com
+  note: >-
+    Served at the canonical A2A path AND byte-identically at the legacy /.well-known/agent.json (both 200,
+    application/json, 10,720 bytes). The root discovery manifest advertises it in an HTTP Link header
+    (rel="describedby"), and agents.txt, llms.txt, sitemap.xml and the HTML landing page all link it. The apex
+    ingest0r.com and www. have no A record; api.ingest0r.com is the only host that resolves, so the card host,
+    the API host, the MCP host and the website are one host. A negative-control well-known path returned the
+    origin's real JSON 404 ({"error":"not_found"}), so the 200 is a served document, not a catch-all.
+ownership:
+  verdict: confirmed
+  basis: >-
+    The card's url and provider.url are https://api.ingest0r.com (the fetch host); the OpenAPI at the same host
+    names servers[0] https://api.ingest0r.com and contact.email hyperionxmota@gmail.com, which is also the
+    security.txt Contact; the MCP initialize response names websiteUrl https://api.ingest0r.com; and every
+    skill's x-endpoint is on that host. The operator identifies itself only as provider.organization
+    "independent" — there is no company name, legal page or repository anywhere on the surface — so the
+    identity this catalog can assert is the domain, and the domain is consistent across every document.
+x-evidence:
+  fetched: '2026-09-19'
+  url: https://api.ingest0r.com/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json
+  body_bytes: 10720
+  body_parses_as: >-
+    JSON object with AgentCard 0.3.0 shape (protocolVersion, name, description, url, version, documentationUrl,
+    provider, defaultInputModes, defaultOutputModes, capabilities, securitySchemes, skills) plus four
+    x- extension keys (x-free-sample, x-free-tier, x-rate-limit, x-links).
+  response_headers:
+    cache-control: private, max-age=3600
+    strict-transport-security: max-age=31536000; includeSubDomains
+    x-content-type-options: nosniff
+    server: cloudflare
+  corroborating_probes:
+  - url: https://api.ingest0r.com/.well-known/agent.json
+    http_status: 200
+    note: Legacy path; byte-identical body (cmp).
+  - url: https://api.ingest0r.com/
+    http_status: 200
+    note: 'Link: </.well-known/agent-card.json>; rel="describedby"; type="application/json" on the root discovery manifest.'
+  - url: https://api.ingest0r.com/.well-known/apievangelist-negative-control-7f3a91.json
+    http_status: 404
+    note: Negative control — origin JSON 404, so /.well-known/* is not a catch-all.
+  - url: https://ingest0r.com/.well-known/agent-card.json
+    http_status: 0
+    note: The apex has no A/AAAA record (Cloudflare NS and SOA exist).
+  - url: https://a2aregistry.org
+    note: The registry listing that led here (harvest.yml meta.agent_card). The card above was fetched from the provider's host, not taken from the registry.
+agent_card:
+  name: Cook County (Chicago) property records API
+  url: https://api.ingest0r.com
+  version: 0.4.2
+  protocol_version: 0.3.0
+  documentation_url: https://api.ingest0r.com/llms.txt
+  provider:
+    organization: independent
+    url: https://api.ingest0r.com
+  capabilities:
+    streaming: false
+    extensions:
+    - uri: https://x402.org/extensions/payments
+      required: false
+      description: Pay-per-call via x402 (HTTP 402 + USDC); applies only past the free daily allowance of 25 calls per client
+      params_summary: x402Version 2; accepts USDC on eip155:8453 (Base) and solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp; prices in atomic USDC 6dp — /v1/search 0, /v1/parcel 10000, /v1/dossier 30000, /v1/comps 100000
+  security_schemes: {}
+  default_input_modes: [application/json]
+  default_output_modes: [application/json]
+  skill_count: 5
+  skills:
+  - {id: v1_sample, name: sample, price: '$0.00', endpoint: https://api.ingest0r.com/v1/sample, tags: [free, sample, evaluation, real-estate, property-data, cook-county]}
+  - {id: v1_search, name: search, price: '$0.00', endpoint: 'https://api.ingest0r.com/v1/search/{q}', tags: [real-estate, property-data, cook-county, public-records]}
+  - {id: v1_parcel, name: parcel, price: '$0.01', endpoint: 'https://api.ingest0r.com/v1/parcel/{pin}', tags: [real-estate, property-data, cook-county, public-records]}
+  - {id: v1_dossier, name: dossier, price: '$0.03', endpoint: 'https://api.ingest0r.com/v1/dossier/{pin}', tags: [real-estate, property-data, cook-county, public-records]}
+  - {id: v1_comps, name: comps, price: '$0.10', endpoint: 'https://api.ingest0r.com/v1/comps/{pin}', tags: [real-estate, property-data, cook-county, public-records, valuation]}
+  extension_keys: [x-free-sample, x-free-tier, x-rate-limit, x-links]
+conformance:
+  spec: A2A 1.0.0
+  grade: near-conformant
+  protocol_version: 0.3.0
+  preferred_transport: null
+  hard_checks:
+    capabilities_is_object: true
+    protocol_version_present: true
+    skills_is_array: true
+  optional_fields:
+    default_input_modes: true
+    default_output_modes: true
+    preferred_transport: false
+  grade_basis: >-
+    Graded with the catalog's canonical grader (network/scripts/lib_agent_card.grade_agent_card), which returned
+    near-conformant with no hard-check deviation and one missing optional field, preferredTransport. capabilities
+    is an object, protocolVersion "0.3.0" is present at the top level, skills is an array of five populated
+    skills, and both default mode lists are present.
+  deviations:
+  - field: preferredTransport
+    observed: absent
+    note: No preferredTransport and no additionalInterfaces; the card names no A2A JSON-RPC/gRPC/HTTP+JSON binding at all.
+  - field: skills[].x-endpoint / x-price / x-input-schema / x-output-schema
+    observed: present on every skill
+    note: >-
+      Each skill carries the REST route that backs it plus JSON Schemas for input and output. The card is a
+      discovery document for the REST + MCP surface rather than a description of an A2A task responder — there is
+      no A2A JSON-RPC endpoint to send message/send to, and none is claimed.
+  - field: securitySchemes
+    observed: '{} (empty object)'
+    note: >-
+      The payment requirement is carried in capabilities.extensions[0] (x402), not as a security scheme; free
+      access needs no credential, so an empty securitySchemes is accurate.
+  - field: iconUrl / signatures
+    observed: absent
+    note: No icon and no JWS signature block; authenticity rests on TLS to api.ingest0r.com.
+surface_relationship:
+  note: >-
+    The five A2A skills map one-to-one onto the four OpenAPI operations (v1_search, v1_parcel, v1_dossier,
+    v1_comps) plus the free /v1/sample fixture, which the OpenAPI does not describe. The same five surfaces are
+    the five MCP tools (mcp/ingest0r-com-tool-crosswalk.yml). The card's x-links block points at the OpenAPI,
+    the x402 resource list, llms.txt, pricing, changelog.json and the MCP endpoint — the whole discovery set on
+    one host.

@@ -1,0 +1,7 @@
+# Catalog of native Arazzo workflows in this directory, over the provider's own OpenAPI (../openapi/).
+# The example input is the provider's own documented example address; the PIN steps run free within the
+# 25-call daily allowance (see ../sandbox/ingest0r-com-sandbox.yml and ../conventions/ingest0r-com-conventions.yml).
+- file: ingest0r-com-address-to-valuation-workflow.yml
+  workflowId: address-to-dossier-and-comps
+  title: Cook County address to dossier and comps
+  summary: Resolve a street address to its parcel PIN, fetch the full property dossier, then fetch comparable sales and an implied value range.

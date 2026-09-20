@@ -1,0 +1,61 @@
+generated: '2026-09-19'
+method: derived
+source: >-
+  Derived from the inline response schemas and examples in openapi/ingest0r-com-openapi.yml (the spec has no
+  components/schemas, so entities are the 200-response object shapes) and the live responses observed on
+  2026-09-19. No provider object reference exists beyond llms-full.txt.
+docs: https://api.ingest0r.com/llms-full.txt
+notation: >-
+  relationships use has_one / has_many / belongs_to with the joining field name; direction is from the entity that
+  carries the reference. The whole model hangs off one key: the Cook County PIN.
+identifiers:
+- name: pin
+  description: Cook County Property Index Number — 14 digits (10-digit form accepted), dashes optional (14-08-120-017-0000). The primary key of every record; not an industry-standard identifier.
+  example: '25221090340000'
+- name: class
+  description: Cook County Assessor property class code (string, e.g. "203", "597").
+- name: census_tract_geoid
+  description: 11-digit Census tract GEOID (e.g. 17031491400).
+entities:
+- name: SearchResult
+  operation: v1_search
+  description: Address-to-PIN resolution — the query, its normalized street portion, a match_quality verdict and ranked candidates.
+  fields: [query, normalized, match_quality, 'matches[]', next, note, as_of, source, cite]
+- name: ParcelMatch
+  description: One ranked candidate parcel in a SearchResult.
+  fields: [pin, prop_address, prop_city, prop_zip, exact, score]
+- name: Parcel
+  operation: v1_parcel
+  description: Single parcel record with the street address joined in plus assessor, jurisdiction, school and context attributes.
+  fields: [pin, prop_address, prop_city, prop_zip, class, township_name, nbhd_code, tax_year, lat, lon, municipality, ward, police_district, census_tract_geoid, school_elementary_district, school_secondary_district, walk_score_cmap, airport_noise_dnl, as_of, source, cite]
+- name: Dossier
+  operation: v1_dossier
+  description: The full property record — Parcel basics plus recorded sales/deed history, building permits linked to the PIN, and assessment history.
+  fields: [pin, prop_address, prop_city, prop_zip, class, township_name, nbhd_code, lat, lon, municipality, ward, police_district, census_tract_geoid, school_elementary_district, school_secondary_district, walk_score_cmap, airport_noise_dnl, 'sales_history[]', 'permits[]', 'assessment_history[]', assessment_note, as_of, source, cite]
+- name: Sale
+  description: A recorded sale / deed in Dossier.sales_history (Cook County Recorder).
+- name: Permit
+  description: A building permit in Dossier.permits — linked to the PIN by the provider via address + geo match (the raw City of Chicago permit feed carries no PIN).
+- name: Assessment
+  description: A property-tax assessment year in Dossier.assessment_history (Cook County Assessor / Board of Review).
+- name: CompsResult
+  operation: v1_comps
+  description: Comparable sales for a subject PIN with the widening rung used and an implied valuation range.
+  fields: [pin, 'comps[]', method, implied_range, as_of, source, cite]
+- name: Comp
+  description: One arm's-length comparable sale in CompsResult.comps, carrying its distance in metres from the subject.
+- name: Provenance
+  description: Fields carried on every answer — as_of (nightly refresh timestamp), source (attribution string), cite (canonical URL). Not a separate object; listed for completeness.
+relationships:
+- {from: SearchResult, to: ParcelMatch, kind: has_many, via: matches}
+- {from: ParcelMatch, to: Parcel, kind: has_one, via: pin}
+- {from: Parcel, to: Dossier, kind: has_one, via: pin, note: Dossier is a superset of Parcel for the same PIN.}
+- {from: Dossier, to: Sale, kind: has_many, via: sales_history}
+- {from: Dossier, to: Permit, kind: has_many, via: permits}
+- {from: Dossier, to: Assessment, kind: has_many, via: assessment_history}
+- {from: Parcel, to: CompsResult, kind: has_one, via: pin}
+- {from: CompsResult, to: Comp, kind: has_many, via: comps}
+- {from: Comp, to: Parcel, kind: belongs_to, via: pin, note: Each comp is itself a Cook County parcel; whether the comp object carries a pin field is not stated in the schema.}
+flow: >-
+  v1_search (address -> ParcelMatch[].pin) is the entry point; every other entity is keyed by that pin. Three PINs
+  (09253060510000, 09253140190000, 09253050270000) are always-free live examples of Dossier.

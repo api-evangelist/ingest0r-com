@@ -1,0 +1,49 @@
+generated: '2026-09-19'
+method: searched
+source:
+- https://api.ingest0r.com/v1/sample
+- https://api.ingest0r.com/pricing (free.live_examples, free.daily_allowance)
+- https://api.ingest0r.com/llms.txt
+- https://api.ingest0r.com/.well-known/agent-card.json (x-free-sample, x-free-tier)
+docs: https://api.ingest0r.com/llms.txt
+description: >-
+  There is no separate sandbox environment, test mode or test key: the provider's evaluation surface is the
+  production API itself, made free at three levels so a caller can validate shapes and data quality before any
+  payment. All values below are published by the provider verbatim; none were invented. Everything here was
+  exercised live on 2026-09-19 without payment.
+modes:
+- name: production (single environment)
+  base_url: https://api.ingest0r.com
+  notes: No test/live split, no key prefixes, no wallet needed to start. Payment is per call via x402 only past the free allowance.
+fixtures:
+- name: Fixed sample of every response shape
+  url: https://api.ingest0r.com/v1/sample
+  method: GET
+  price: '$0.00'
+  unlimited: true
+  observed: 200 application/json — keys sample, note, search_example, dossier_example, endpoints, free_examples, scope, how_to_pay, terms
+  description: 'Verbatim (agent card skill v1_sample): "FREE fixed example of every paid response shape — evaluate the data structure and quality for $0 before paying. Not a live record."'
+  mcp_tool: get_free_sample
+live_examples:
+  description: 'Verbatim (pricing / changelog 0.3.0): "free live example PINs (golden PINs) on paid routes" — real parcels served free so a caller can "verify live data quality against the county''s own portals before paying".'
+  pins:
+  - {pin: '09253050270000', url: https://api.ingest0r.com/v1/dossier/09253050270000, observed: '200, x-free-example: true, unmetered'}
+  - {pin: '09253060510000', url: https://api.ingest0r.com/v1/dossier/09253060510000, note: Also the example record in the OpenAPI 200 examples (7645 W HOWARD ST, CHICAGO 60631, class 203).}
+  - {pin: '09253140190000', url: https://api.ingest0r.com/v1/dossier/09253140190000}
+  mcp_note: 'MCP get_free_sample description: "For REAL verified data at $0, call get_cook_county_property_dossier with one of the always-free example PINs 09253060510000, 09253140190000, 09253050270000."'
+free_allowance:
+  calls_per_day: 25
+  applies_to: ['/v1/parcel', '/v1/dossier', '/v1/comps']
+  metering: per client, resets daily at 00:00 UTC
+  headers: [X-Free-Tier, X-Free-Tier-Limit, X-Free-Tier-Remaining]
+  observed: 'GET /v1/parcel/25221090340000 -> 200, x-free-tier: true, x-free-tier-limit: 25, x-free-tier-remaining: 24'
+  exclusions: 'Verbatim (changelog 0.4.2): "the free tier never applies to the directory-probe PINs or route-template URLs, which continue to return 402 so listing verification is unaffected"'
+payment_rehearsal:
+  description: >-
+    The 402 challenge can be observed without spending anything by requesting a route-template URL literally
+    (GET /v1/parcel/%7Bpin%7D), which always returns the x402 PaymentRequired object. HEAD requests never settle a
+    payment (changelog 0.4.0/0.4.1). No testnet rail is published — both rails are mainnet (Base, Solana).
+  observed: 'GET https://api.ingest0r.com/v1/parcel/%7Bpin%7D -> 402 with PAYMENT-REQUIRED header and JSON body'
+example_addresses:
+- {query: '1 E 113th St', note: 'The example in the OpenAPI q parameter description; resolved live to PIN 25221090340000 (match_quality exact, CHICAGO 60628).'}
+- {pin: '14-08-120-017-0000', note: 'The dashed-PIN format example in the OpenAPI pin parameter description.'}

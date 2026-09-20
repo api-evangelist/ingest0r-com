@@ -1,0 +1,17 @@
+generated: '2026-09-19'
+method: searched
+source: registry and repository lookups 2026-09-19 (npm search API, PyPI JSON API, crates.io API, GitHub search and users API) plus every document the provider publishes
+package_count: 0
+official_count: 0
+summary: >-
+  No client library, SDK or CLI on any registry, and the provider does not claim one: llms.txt, the discovery
+  manifest, the agent card and the changelog name no SDK, no repository and no GitHub organization. The
+  provider's integration story is protocol-level — a plain HTTPS GET, an MCP endpoint, an A2A card and x402 —
+  which needs no package. Recorded as an honest zero.
+packages: []
+registries_checked:
+- {registry: npm, query: 'search "ingest0r"', result: absent}
+- {registry: pypi, query: 'pypi.org/pypi/ingest0r/json', result: absent (404)}
+- {registry: crates.io, query: 'crates?q=ingest0r', result: absent (0 crates)}
+- {registry: github, query: 'repositories matching ingest0r; user/org "ingest0r"', result: absent (0 repos; user 404)}
+- {registry: provider docs, query: 'llms.txt, llms-full.txt, /, agent card x-links, changelog.json', result: no SDK, CLI or repository named}

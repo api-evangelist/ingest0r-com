@@ -1,0 +1,45 @@
+generated: '2026-09-19'
+method: searched
+probe: true
+source:
+- https://api.ingest0r.com/pricing (terms)
+- https://api.ingest0r.com/.well-known/security.txt
+- https://api.ingest0r.com/changelog.json
+- live probes of conventional paths on api.ingest0r.com, 2026-09-19
+signals: {}
+probed:
+- {url: https://api.ingest0r.com/accessibility, status: 404}
+- {url: https://api.ingest0r.com/accessibility/vpat, status: 404}
+- {url: https://api.ingest0r.com/legal/subprocessors, status: 404}
+- {url: https://api.ingest0r.com/legal/dpa, status: 404}
+- {url: https://api.ingest0r.com/privacy/requests, status: 404}
+- {url: https://api.ingest0r.com/privacy, status: 404}
+- {url: https://api.ingest0r.com/terms, status: 404}
+- {url: https://api.ingest0r.com/legal, status: 404}
+- {url: https://api.ingest0r.com/transparency, status: 404}
+- {url: https://api.ingest0r.com/trust, status: 404}
+- {url: https://api.ingest0r.com/security, status: 301, note: Redirects to /.well-known/security.txt (RFC 9116 contact only; no Policy line, no SBOM).}
+- {url: https://api.ingest0r.com/security/sbom, status: 404}
+- {url: https://api.ingest0r.com/docs/data-residency, status: 404}
+- {url: https://api.ingest0r.com/ai, status: 404}
+- {url: https://api.ingest0r.com/ai/transparency, status: 404}
+- {url: https://api.ingest0r.com/legal/report-content, status: 404}
+- {url: https://ingest0r.com/, status: 0, note: NXDOMAIN — no apex site, so no legal page host exists beyond the API host.}
+near_misses:
+- signal: data_residency
+  observed: 'pricing terms.sla says "single region" without naming it'
+  why_not_recorded: A residency statement must name where data is held; "single region" does not.
+- signal: support_lifetime
+  observed: 'changelog.json policy: "Breaking changes would ship as /v2 with /v1 kept alive"'
+  why_not_recorded: A compatibility promise with no stated period is recorded in lifecycle/ as a deprecation policy, not as a support-lifetime commitment.
+- signal: data_subject_request
+  observed: 'pricing terms.privacy: "Property-keyed only. No owner, buyer, seller or occupant names are stored on any serving path or logged."'
+  why_not_recorded: A no-personal-data statement is not a request channel; no DSR page or endpoint exists.
+- signal: incident_notification
+  observed: security.txt Contact only
+  why_not_recorded: A vulnerability-report contact is not a customer incident-notification commitment.
+note: >-
+  No horizontal-regime signal is published. The provider serves no legal, privacy, terms or accessibility page at
+  all — the only terms text is the license/warranty/sla/privacy block inside /pricing and /v1/sample, and the only
+  contact is a personal address in security.txt. Absence is the measurement; nothing has been inferred about which
+  regimes reach an anonymous operator of a public-records API.

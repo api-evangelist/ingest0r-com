@@ -1,0 +1,758 @@
+openapi: 3.1.0
+info:
+  title: Cook County (Chicago) property records API
+  version: 0.4.2
+  description: 'Pay-per-call property-records API for Cook County, Illinois — including
+    the City of Chicago. Look up any property by street ADDRESS or 14-digit PIN and
+    get parcel details, recorded sales & deed history, building permits, and property-tax
+    assessment history, joined and normalized into one answer. Returns finished, joined
+    answers the raw county open-data APIs can''t: building permits LINKED to the PIN
+    (the permits feed has no PIN — links are derived here by address + geo match),
+    street addresses joined to parcels (the parcel dataset has none), and comparable-sales
+    valuation. You get the answer, not rows to query, stitch, and derive yourself.
+    Use for real-estate due diligence, automated valuation / comparable-sales (comps),
+    title and lien research prep, lead enrichment, and market analysis. ~1.9M parcels,
+    refreshed nightly, property-keyed (public records only — no personal data). No
+    signup and no API key. Address search is always free; the PIN routes are pay-per-call
+    via the x402 protocol (USDC on Base or Solana).'
+  contact:
+    url: https://api.ingest0r.com
+    email: hyperionxmota@gmail.com
+  x-keywords:
+  - cook county
+  - chicago
+  - illinois
+  - property records
+  - real estate
+  - parcel
+  - PIN
+  - address lookup
+  - address to PIN
+  - property tax
+  - assessment
+  - recorded sales
+  - deed history
+  - building permits
+  - comparable sales
+  - comps
+  - automated valuation
+  - due diligence
+  - lead enrichment
+  - title research
+  - open data
+  - x402
+  - pay per call
+  - evanston
+  - oak park
+  - cicero
+  - skokie
+  - berwyn
+  - des plaines
+  - arlington heights
+  - palatine
+  - schaumburg
+  - orland park
+  - tinley park
+  - oak lawn
+  - suburban cook county
+  - assessed value
+  - assessor
+  - cook county assessor
+  - board of review
+  - AVM
+  - home value
+  - last sold price
+  - sale history
+  - permit history
+  - building permit lookup
+  - renovation history
+  - pin lookup
+  - cook county pin
+  - geocode
+  - latitude longitude
+  - property research
+  - real estate investor
+  - underwriting
+  - ward
+  - census tract
+  x-rate-limit:
+    requests_per_minute: 120
+  x-guidance: 'Resolve a street address to a parcel PIN with GET /v1/search/{q} —
+    search is FREE, no payment needed. Then fetch the full record with GET /v1/dossier/{pin}.
+    Use /v1/parcel/{pin} for a cheap single lookup and /v1/comps/{pin} for comparable
+    sales. The PIN routes are pay-per-call via x402 (USDC on Base or Solana) and return
+    HTTP 402 with machine-readable payment terms until paid. Try GET /v1/sample FIRST
+    — it is FREE and returns a representative response so you can validate the data
+    shape before paying. You do not need a wallet to evaluate this API: search and
+    the sample cost nothing, and the free live example PINs listed at https://api.ingest0r.com/pricing
+    return real records on the normal paid routes at $0. The same data is available
+    as an MCP server (streamable-http) at https://api.ingest0r.com/mcp if your client
+    speaks MCP rather than plain HTTP. Coverage is Cook County, Illinois (including
+    the City of Chicago) ONLY; data is property-keyed public records — no personal,
+    owner, or occupant data.'
+servers:
+- url: https://api.ingest0r.com
+paths:
+  /v1/search/{q}:
+    get:
+      operationId: v1_search
+      summary: Address → PIN lookup for Cook County / Chicago.
+      description: 'Address → PIN lookup for Cook County / Chicago. Resolve a full
+        or partial STREET ADDRESS to its parcel PIN(s): ranked candidate parcels with
+        address, city, ZIP, a match score and a match_quality flag (exact | likely
+        | weak | none) — resolving the address-to-parcel gap (the raw parcel dataset
+        has no address). The entry point when you have an address but not a PIN —
+        call this before /v1/dossier, /v1/parcel, or /v1/comps. Public assessor records.
+        FREE — no payment required (the PIN routes are pay-per-call).'
+      parameters:
+      - name: q
+        in: path
+        required: true
+        description: Street address or partial (4+ chars), e.g. '1 E 113th St'. A
+          trailing city/state/ZIP is fine and is stripped ('1 E 113th St, Chicago,
+          IL 60628').
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.00'
+          currency: USD
+        protocols:
+        - x402: {}
+        x-free: true
+      responses:
+        '200':
+          description: Free result — no payment required.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  normalized:
+                    type: string
+                    description: the street portion actually matched
+                  match_quality:
+                    type: string
+                    description: exact | likely | weak | none. Only 'exact' is certain;
+                      'weak' means no candidate shares the house number - do not rely
+                      on it
+                  matches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pin:
+                          type: string
+                        prop_address:
+                          type: string
+                        prop_city:
+                          type: string
+                        prop_zip:
+                          type: string
+                        exact:
+                          type: boolean
+                        score:
+                          type: number
+                          description: 0-1 address similarity
+              example:
+                query: 7645 W Howard St, Chicago, IL 60631
+                normalized: 7645 W HOWARD ST
+                match_quality: exact
+                matches:
+                - pin: 09253060510000
+                  prop_address: 7645 W HOWARD ST
+                  prop_city: CHICAGO
+                  prop_zip: '60631'
+                  score: 1.0
+                  exact: true
+        '400':
+          description: query_too_short — send at least 4 characters of a street address.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: query_too_short
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s)
+            and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not
+            a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+  /v1/parcel/{pin}:
+    get:
+      operationId: v1_parcel
+      summary: 'Single Cook County, IL parcel record by PIN: street address, city,
+        ZIP, assessor property class, township, neighborhood, ward/municipality,…'
+      description: 'Single Cook County, IL parcel record by PIN: street address, city,
+        ZIP, assessor property class, township, neighborhood, ward/municipality, census
+        tract, school districts, walkability and airport-noise context, and lat/lon
+        — with the street address joined in (the raw parcel dataset has none). The
+        cheap single-property lookup. Source: Cook County Assessor, refreshed nightly.'
+      parameters:
+      - name: pin
+        in: path
+        required: true
+        description: Cook County PIN, 10 or 14 digits, dashes ok (14-08-120-017-0000).
+          Only have an address? /v1/search first.
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.01'
+          currency: USD
+        protocols:
+        - x402:
+            x402Version: 2
+            payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            accepts:
+            - scheme: exact
+              network: eip155:8453
+              asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+              currency: USDC
+              payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            - scheme: exact
+              network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+              asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+              currency: USDC
+              payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF
+            asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+            network: eip155:8453
+      responses:
+        '200':
+          description: Paid result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pin:
+                    type: string
+                  prop_address:
+                    type: string
+                  prop_city:
+                    type: string
+                  prop_zip:
+                    type: string
+                  class:
+                    type: string
+                  township_name:
+                    type: string
+                  nbhd_code:
+                    type: string
+                  tax_year:
+                    type: integer
+                  lat:
+                    type: number
+                  lon:
+                    type: number
+                  municipality:
+                    type: string
+                  ward:
+                    type: string
+                  police_district:
+                    type: string
+                  census_tract_geoid:
+                    type: string
+                  school_elementary_district:
+                    type: string
+                  school_secondary_district:
+                    type: string
+                  walk_score_cmap:
+                    type: number
+                  airport_noise_dnl:
+                    type: number
+              example:
+                pin: 09253060510000
+                prop_address: 7645 W HOWARD ST
+                prop_city: CHICAGO
+                prop_zip: '60631'
+                class: '203'
+                township_name: Jefferson
+                nbhd_code: '71361'
+                municipality: CITY OF CHICAGO
+                ward: '41'
+                tax_year: 2026
+                lat: 42.0184
+                lon: -87.8181
+        '402':
+          description: 'Payment required (x402): pay per the returned challenge and
+            retry the request.'
+        '400':
+          description: invalid_pin — PIN must be 14 digits (or the 10-digit form,
+            dashed or not).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: invalid_pin
+        '404':
+          description: not_found — well-formed PIN that is not in the Cook County
+            parcel universe (coverage is Cook County only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: not_found
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s)
+            and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not
+            a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+  /v1/dossier/{pin}:
+    get:
+      operationId: v1_dossier
+      summary: 'Complete Cook County / Chicago property record in one call: parcel
+        basics PLUS recorded sales & deed history, building permits, and…'
+      description: 'Complete Cook County / Chicago property record in one call: parcel
+        basics PLUS recorded sales & deed history, building permits, and property-tax
+        assessment history, joined and normalized, with neighborhood/ward/school/walkability
+        context. Permits are LINKED to the PIN (the raw permit feed has none) — one
+        finished record, not raw rows to stitch. For due diligence, valuation, underwriting.
+        Nightly-fresh; no personal data.'
+      parameters:
+      - name: pin
+        in: path
+        required: true
+        description: Cook County PIN, 10 or 14 digits, dashes ok (14-08-120-017-0000).
+          Only have an address? /v1/search first.
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.03'
+          currency: USD
+        protocols:
+        - x402:
+            x402Version: 2
+            payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            accepts:
+            - scheme: exact
+              network: eip155:8453
+              asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+              currency: USDC
+              payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            - scheme: exact
+              network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+              asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+              currency: USDC
+              payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF
+            asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+            network: eip155:8453
+      responses:
+        '200':
+          description: Paid result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pin:
+                    type: string
+                  prop_address:
+                    type: string
+                  class:
+                    type: string
+                  municipality:
+                    type: string
+                  ward:
+                    type: string
+                  sales_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                        price:
+                          type: number
+                        doc_no:
+                          type: string
+                        deed_type:
+                          type: string
+                  permits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        issued:
+                          type: string
+                        type:
+                          type: string
+                        cost:
+                          type: number
+                        desc:
+                          type: string
+                  assessment_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        year:
+                          type: integer
+                        certified:
+                          type: number
+                        board:
+                          type: number
+                        mailed:
+                          type: number
+                        stage:
+                          type: string
+                          description: pending|mailed|certified|board
+                  assessment_note:
+                    type: string
+                    description: ASSESSED values, not market value or tax owed
+              example:
+                pin: 09253060510000
+                prop_address: 7645 W HOWARD ST
+                prop_city: CHICAGO
+                prop_zip: '60631'
+                class: '203'
+                municipality: CITY OF CHICAGO
+                ward: '41'
+                sales_history:
+                - date: '2014-08-01'
+                  price: 385000.0
+                  doc_no: '1423956016'
+                  deed_type: Warranty
+                permits:
+                - issued: '2020-12-15'
+                  type: PERMIT - EASY PERMIT PROCESS
+                  cost: 24149.0
+                  desc: SOLAR PANEL PERMIT
+                assessment_history:
+                - year: 2025
+                  certified: 42001.0
+                  board: 42001.0
+                  mailed: 42001.0
+                  stage: board
+        '402':
+          description: 'Payment required (x402): pay per the returned challenge and
+            retry the request.'
+        '400':
+          description: invalid_pin — PIN must be 14 digits (or the 10-digit form,
+            dashed or not).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: invalid_pin
+        '404':
+          description: not_found — well-formed PIN that is not in the Cook County
+            parcel universe (coverage is Cook County only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: not_found
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s)
+            and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not
+            a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+  /v1/comps/{pin}:
+    get:
+      operationId: v1_comps
+      summary: 'Comparable sales (comps) and a lightweight automated valuation for
+        a Cook County / Chicago property: recent arm''s-length sales in the same…'
+      description: 'Comparable sales (comps) and a lightweight automated valuation
+        for a Cook County / Chicago property: recent arm''s-length sales in the same
+        assessor neighborhood and property class over the last 18 months, with an
+        implied low/median/high price range, each comp carrying its distance in metres
+        from the subject. Thin markets widen automatically (36 months, then the property-class
+        group) and the response reports which rung was used. Non-arm''s-length and
+        multi-parcel deeds are filtered out — a derived valuation you won''t get from
+        a raw open-data query. For valuation, underwriting, investment screening,
+        and due diligence.'
+      parameters:
+      - name: pin
+        in: path
+        required: true
+        description: Cook County PIN, 10 or 14 digits, dashes ok (14-08-120-017-0000).
+          Only have an address? /v1/search first.
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.10'
+          currency: USD
+        protocols:
+        - x402:
+            x402Version: 2
+            payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            accepts:
+            - scheme: exact
+              network: eip155:8453
+              asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+              currency: USDC
+              payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            - scheme: exact
+              network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+              asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+              currency: USDC
+              payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF
+            asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+            network: eip155:8453
+      responses:
+        '200':
+          description: Paid result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pin:
+                    type: string
+                  comps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pin:
+                          type: string
+                        prop_address:
+                          type: string
+                        sale_date:
+                          type: string
+                        sale_price:
+                          type: number
+                        deed_type:
+                          type: string
+                        comp_class:
+                          type: string
+                        distance_m:
+                          type: number
+                          description: metres from the subject parcel
+                  method:
+                    type: string
+                    description: which matching rung produced these comps
+                  implied_range:
+                    type: object
+                    properties:
+                      low:
+                        type: number
+                      median:
+                        type: number
+                      high:
+                        type: number
+                      n:
+                        type: integer
+              example:
+                pin: 09253060510000
+                comps:
+                - pin: 09253140190000
+                  prop_address: 7452 N OTTAWA AVE
+                  sale_date: '2019-08-16'
+                  sale_price: 567500
+                  deed_type: Warranty
+                implied_range:
+                  low: 385000
+                  median: 470000
+                  high: 567500
+                  n: 7
+        '402':
+          description: 'Payment required (x402): pay per the returned challenge and
+            retry the request.'
+        '400':
+          description: invalid_pin — PIN must be 14 digits (or the 10-digit form,
+            dashed or not).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: invalid_pin
+        '404':
+          description: not_found — well-formed PIN that is not in the Cook County
+            parcel universe (coverage is Cook County only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: not_found
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s)
+            and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not
+            a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+x-payment:
+  protocol: x402
+  x402Version: 2
+  accepts:
+  - scheme: exact
+    network: eip155:8453
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    currency: USDC
+    payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+  - scheme: exact
+    network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+    asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    currency: USDC
+    payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF

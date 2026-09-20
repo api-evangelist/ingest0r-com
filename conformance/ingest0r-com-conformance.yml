@@ -1,0 +1,124 @@
+generated: '2026-09-19'
+method: searched
+source:
+- https://api.ingest0r.com/openapi.json
+- https://api.ingest0r.com/.well-known/agent-card.json
+- https://api.ingest0r.com/.well-known/x402
+- https://api.ingest0r.com/mcp
+- https://api.ingest0r.com/.well-known/security.txt
+- https://api.ingest0r.com/changelog.json
+derived_from: openapi/ingest0r-com-openapi.yml
+docs:
+- https://api.ingest0r.com/llms.txt
+summary: >-
+  The conformance profile is the agent-commerce protocol stack, and every item on it was observed live rather
+  than taken from a claim: an OpenAPI 3.1.0 that parses, an A2A 0.3.0 agent card graded near-conformant by the
+  catalog grader, a Model Context Protocol server negotiating protocol 2025-11-25 over streamable HTTP with
+  annotated tools, an x402 v2 payment challenge (HTTP 402 with a PAYMENT-REQUIRED header and a v2 PaymentRequired
+  body naming USDC on Base and Solana, plus a Bazaar discovery extension), an RFC 9116 security.txt, an llms.txt,
+  and robots.txt + sitemap.xml. It declares no OAuth 2.0 / OIDC, no RFC 9457 problem details (errors are a plain
+  {error, detail} envelope), no RFC 9727 API catalog, no APIs.json, no RFC 8594 Sunset signalling and no
+  pagination standard (no list endpoints). No domain standard is declared for property data — the PIN is Cook
+  County's own parcel identifier, not an industry scheme — and none is invented here.
+standards:
+- id: openapi
+  name: OpenAPI Specification
+  version: 3.1.0
+  conforms: true
+  verification: observed
+  evidence: >-
+    https://api.ingest0r.com/openapi.json — openapi "3.1.0", info.version 0.4.2, servers[0] https://api.ingest0r.com,
+    4 paths / 4 GET operations with operationIds, per-response JSON schemas and examples, per-route x-payment-info
+    and a top-level x-payment block. Advertised in the root Link header as rel="service-desc". No components,
+    securitySchemes or tags.
+- id: a2a
+  name: Agent2Agent protocol — Agent Card
+  version: 0.3.0
+  conforms: true
+  grade: near-conformant
+  verification: observed
+  evidence: >-
+    a2a/ingest0r-com-agent-card.json — served at the canonical /.well-known/agent-card.json and the legacy
+    /.well-known/agent.json (byte-identical). protocolVersion 0.3.0 top-level, capabilities object, skills[] of 5,
+    defaultInputModes/defaultOutputModes present; preferredTransport absent (the only grader deviation). Declares
+    the https://x402.org/extensions/payments capability extension.
+- id: mcp
+  name: Model Context Protocol
+  version: '2025-11-25'
+  conforms: true
+  verification: observed
+  evidence: >-
+    POST https://api.ingest0r.com/mcp initialize -> protocolVersion 2025-11-25, serverInfo
+    cook-county-chicago-property-data 1.27.2, capabilities tools/prompts/resources; tools/list -> 5 tools each
+    with JSON Schema inputSchema and MCP tool annotations (readOnlyHint, destructiveHint, idempotentHint,
+    openWorldHint). Transport streamable-http (SSE-framed responses). Server manifest at /.well-known/mcp.json.
+- id: x402
+  name: x402 HTTP payment protocol
+  version: '2'
+  conforms: true
+  verification: observed
+  domain_standard_signature: true
+  evidence: >-
+    GET https://api.ingest0r.com/v1/parcel/{pin} (route-template URL, never eligible for the free tier) -> HTTP
+    402 with a PAYMENT-REQUIRED header (base64 of the body) and a JSON body {x402Version 2, error "Payment
+    required", resource{url}, accepts[] of 2 — scheme exact / network eip155:8453 / asset
+    0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 (USDC) / amount 10000 / payTo / maxTimeoutSeconds 60 / extra{name,
+    version, resource, description, input_schema, output_schema}, and scheme exact / network
+    solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp / asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v / feePayer},
+    extensions.bazaar{info{input,output}, schema, routeTemplate}}. Resource list at /.well-known/x402
+    (x402Version 2, serviceVersion 0.4.2, 4 items). Facilitator https://facilitator.payai.network per /pricing.
+    Nothing was paid; the challenge was observed, not settled.
+  note: >-
+    x402 is recorded here as the payment standard the contract itself declares (openapi x-payment /
+    x-payment-info, agent card extension, 402 challenge) — a machine-verifiable signature of the agent-commerce
+    domain, not of the property-data domain.
+- id: rfc9116
+  name: security.txt (RFC 9116)
+  conforms: true
+  verification: observed
+  evidence: https://api.ingest0r.com/.well-known/security.txt — Contact, Expires, Canonical, Preferred-Languages. No Policy line.
+- id: llms-txt
+  name: llms.txt
+  conforms: true
+  verification: observed
+  evidence: https://api.ingest0r.com/llms.txt — H1, blockquote summary, ## Endpoints and ## Machine discovery link lists; llms-full.txt alongside. Linked from robots.txt and the Link header (rel="help").
+- id: robots-sitemap
+  name: robots.txt + XML sitemap
+  conforms: true
+  verification: observed
+  evidence: /robots.txt (Allow /, Sitemap directive) and /sitemap.xml (18 URLs, sitemaps.org 0.9 schema).
+- id: rfc9457
+  name: Problem Details for HTTP APIs (RFC 9457)
+  conforms: false
+  verification: observed
+  evidence: 4xx bodies are application/json {error, detail[, pin]} (observed 400 query_too_short, 400 invalid_pin, 404 not_found); no application/problem+json, no type/title/status members.
+- id: oauth2
+  name: OAuth 2.0 / OpenID Connect
+  conforms: false
+  verification: observed
+  evidence: No securitySchemes in the OpenAPI; /.well-known/oauth-authorization-server, oauth-protected-resource and openid-configuration all 404. Access is credential-free; payment is the only gate.
+- id: rfc8594
+  name: Sunset header (RFC 8594) / Deprecation header
+  conforms: false
+  verification: searched
+  evidence: No Sunset or Deprecation header documented or observed; the compatibility promise is prose in changelog.json (additive-only within /v1, /v1 kept alive across a /v2 break).
+- id: rfc9727
+  name: API Catalog (RFC 9727)
+  conforms: false
+  verification: observed
+  evidence: /.well-known/api-catalog and api-catalog.json 404.
+- id: apis-json
+  name: APIs.json
+  conforms: false
+  verification: observed
+  evidence: /apis.json, /apis.yml and /.well-known/apis.json 404.
+- id: idempotency
+  name: Idempotency-Key (IETF draft)
+  conforms: null
+  verification: not-applicable
+  evidence: The API has no write operations (4 GETs; every MCP tool annotated readOnlyHint true), so replay protection does not arise.
+- id: pagination
+  name: Pagination conventions
+  conforms: null
+  verification: not-applicable
+  evidence: No list endpoint; search returns a bounded ranked candidate array and the other routes return one record.

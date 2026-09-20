@@ -1,0 +1,29 @@
+# Cook County (Chicago) property records API
+
+> Pay-per-call property-records API for Cook County, Illinois — including the City of Chicago. Look up any property by street ADDRESS or 14-digit PIN and get parcel details, recorded sales & deed history, building permits, and property-tax assessment history, joined and normalized into one answer. Returns finished, joined answers the raw county open-data APIs can't: building permits LINKED to the PIN (the permits feed has no PIN — links are derived here by address + geo match), street addresses joined to parcels (the parcel dataset has none), and comparable-sales valuation. You get the answer, not rows to query, stitch, and derive yourself. Use for real-estate due diligence, automated valuation / comparable-sales (comps), title and lien research prep, lead enrichment, and market analysis. ~1.9M parcels, refreshed nightly, property-keyed (public records only — no personal data). No signup and no API key. Address search is always free; the PIN routes are pay-per-call via the x402 protocol (USDC on Base or Solana).
+
+No API key and NO WALLET NEEDED to start: address search is always free and the first 25 calls per client per day return real data free; x402 (USDC on Base/Solana) covers anything beyond that.
+
+Pay-per-call HTTP API (x402: HTTP 402 + USDC on Base or Solana) past the free allowance, no API keys. Coverage is Cook County, Illinois (including Chicago) ONLY. Property-keyed public records. Try the FREE sample first to see response shapes.
+
+NOT covered: anywhere outside Cook County, Illinois, USA (no other counties, states, or countries); owner or occupant names; mortgages and liens; nationwide search; interior details or photos; MLS listings or asking prices; property tax BILL amounts or taxes owed (assessed values only); building square footage, bedrooms, bathrooms, or year built; zoning and land-use designations; foreclosure, eviction, or code-violation filings; rental, tenancy, or Section 8 data.
+
+## Endpoints
+- [Free sample](https://api.ingest0r.com/v1/sample): representative responses, $0, no payment needed
+- [Free LIVE example](https://api.ingest0r.com/v1/dossier/09253050270000): real parcel 09253050270000, served free — verify live data quality against the county's own portals before paying
+- [Free LIVE example](https://api.ingest0r.com/v1/dossier/09253060510000): real parcel 09253060510000, served free — verify live data quality against the county's own portals before paying
+- [Free LIVE example](https://api.ingest0r.com/v1/dossier/09253140190000): real parcel 09253140190000, served free — verify live data quality against the county's own portals before paying
+- [GET /v1/search/{q}](https://api.ingest0r.com/v1/search/{q}) (FREE): Address → PIN lookup for Cook County / Chicago.
+- [GET /v1/parcel/{pin}](https://api.ingest0r.com/v1/parcel/{pin}) ($0.01 (first 25/day FREE)): Single Cook County, IL parcel record by PIN: street address, city, ZIP, assessor property class, township, neighborhood, ward/municipality,…
+- [GET /v1/dossier/{pin}](https://api.ingest0r.com/v1/dossier/{pin}) ($0.03 (first 25/day FREE)): Complete Cook County / Chicago property record in one call: parcel basics PLUS recorded sales & deed history, building permits, and…
+- [GET /v1/comps/{pin}](https://api.ingest0r.com/v1/comps/{pin}) ($0.10 (first 25/day FREE)): Comparable sales (comps) and a lightweight automated valuation for a Cook County / Chicago property: recent arm's-length sales in the same…
+
+## Machine discovery
+- [Discovery manifest](https://api.ingest0r.com/): schemas, prices, example flow
+- [Full LLM docs](https://api.ingest0r.com/llms-full.txt): everything in one fetch (schemas, examples, errors, pricing)
+- [Pricing](https://api.ingest0r.com/pricing): machine-readable rate card
+- [Changelog](https://api.ingest0r.com/changelog.json): versions + additive-only schema policy
+- [OpenAPI 3.1](https://api.ingest0r.com/openapi.json): per-route x-payment-info
+- [x402 resource list](https://api.ingest0r.com/.well-known/x402)
+- [A2A agent card](https://api.ingest0r.com/.well-known/agent-card.json)
+- [MCP endpoint](https://api.ingest0r.com/mcp): streamable-http; tools: search_chicago_property_by_address, get_cook_county_parcel, get_cook_county_property_dossier, find_chicago_comparable_sales, get_free_sample

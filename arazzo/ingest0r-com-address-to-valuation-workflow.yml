@@ -1,0 +1,84 @@
+arazzo: 1.0.1
+info:
+  title: Cook County address to dossier and comps
+  summary: Resolve a street address to its parcel PIN, fetch the full property dossier, then fetch comparable sales and an implied value range.
+  description: >-
+    The provider's own recommended flow over its four-operation API: the free address search first, then the
+    two paid PIN routes an agent needs for due diligence or valuation. Every operationId exists verbatim in
+    ../openapi/ingest0r-com-openapi.yml. No credential is needed; the PIN steps are free for the first 25 calls
+    per client per day and otherwise answer HTTP 402 with x402 v2 terms (USDC on Base or Solana), to be retried
+    with a PAYMENT-SIGNATURE header. The example input is the address the provider uses in its own parameter
+    description and resolves live to an exact match.
+  version: 1.0.0
+sourceDescriptions:
+- name: propertyApi
+  url: ../openapi/ingest0r-com-openapi.yml
+  type: openapi
+workflows:
+- workflowId: address-to-dossier-and-comps
+  summary: Address -> PIN -> dossier -> comps.
+  description: >-
+    Step 1 is always free. Steps 2 and 3 are metered against the daily free allowance (X-Free-Tier-Remaining) and
+    cost $0.03 and $0.10 respectively past it. Stop after step 1 unless match_quality is exact.
+  inputs:
+    type: object
+    required: [address]
+    properties:
+      address:
+        type: string
+        description: Full or partial Cook County street address (4+ characters); a trailing city/state/ZIP is stripped.
+        example: 1 E 113th St
+  steps:
+  - stepId: resolveAddress
+    description: Resolve the address to ranked parcel PIN candidates (free, unlimited).
+    operationId: v1_search
+    parameters:
+    - name: q
+      in: path
+      value: $inputs.address
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: $response.body#/match_quality == 'exact'
+    outputs:
+      pin: $response.body#/matches/0/pin
+      matchQuality: $response.body#/match_quality
+      asOf: $response.body#/as_of
+  - stepId: fetchDossier
+    description: Full property record for the resolved PIN — parcel basics, recorded sales and deed history, permits linked to the PIN, assessment history ($0.03 past the free allowance).
+    operationId: v1_dossier
+    parameters:
+    - name: pin
+      in: path
+      value: $steps.resolveAddress.outputs.pin
+    successCriteria:
+    - condition: $statusCode == 200
+    onFailure:
+    - name: paymentRequired
+      type: end
+      criteria:
+      - condition: $statusCode == 402
+    outputs:
+      dossier: $response.body
+      freeTierRemaining: $response.header.X-Free-Tier-Remaining
+  - stepId: fetchComps
+    description: Comparable arm's-length sales and implied low/median/high range for the same PIN ($0.10 past the free allowance).
+    operationId: v1_comps
+    parameters:
+    - name: pin
+      in: path
+      value: $steps.resolveAddress.outputs.pin
+    successCriteria:
+    - condition: $statusCode == 200
+    onFailure:
+    - name: paymentRequired
+      type: end
+      criteria:
+      - condition: $statusCode == 402
+    outputs:
+      comps: $response.body#/comps
+      method: $response.body#/method
+      impliedRange: $response.body#/implied_range
+  outputs:
+    pin: $steps.resolveAddress.outputs.pin
+    dossier: $steps.fetchDossier.outputs.dossier
+    impliedRange: $steps.fetchComps.outputs.impliedRange
