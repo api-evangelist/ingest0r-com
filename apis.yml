@@ -23,6 +23,27 @@ created: '2026-09-19'
 modified: '2026-09-19'
 tags:
 - Company
+- Real-Estate
+- Property Records
+- Property Data
+- Public Records
+- Open Data
+- Government Data
+- Parcel
+- Geocoding
+- Property Tax
+- Building Permits
+- Comparable Sales
+- Valuation
+- x402
+- Agentic Commerce
+- MCP
+- A2A
+- agent-native
+- Chicago
+- Illinois
+tags_raw:
+- Company
 - Real Estate
 - Property Records
 - Property Data
@@ -60,6 +81,15 @@ apis:
   humanURL: https://api.ingest0r.com/
   baseURL: https://api.ingest0r.com
   tags:
+  - Real-Estate
+  - Property Records
+  - Parcel
+  - Geocoding
+  - Building Permits
+  - Comparable Sales
+  - x402
+  - agent-native
+  tags_raw:
   - Real Estate
   - Property Records
   - Parcels
@@ -117,6 +147,12 @@ apis:
   humanURL: https://api.ingest0r.com/mcp
   baseURL: https://api.ingest0r.com/mcp
   tags:
+  - MCP
+  - Real-Estate
+  - Property Records
+  - x402
+  - agent-native
+  tags_raw:
   - MCP
   - Real Estate
   - Property Records
