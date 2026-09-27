@@ -1,0 +1,45 @@
+{
+  "provider": "ingest0r-com",
+  "sources": [
+    "_original/ingest0r-com-openapi.json",
+    "ingest0r-com-openapi.yml"
+  ],
+  "outputs": [
+    "ingest0r-com-comps-api-openapi.yml",
+    "ingest0r-com-dossier-api-openapi.yml",
+    "ingest0r-com-parcel-api-openapi.yml",
+    "ingest0r-com-search-api-openapi.yml"
+  ],
+  "archived": [
+    "archived openapi/ingest0r-com-openapi.yml"
+  ],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "ingest0r-com-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "ingest0r-com-openapi.json: tagged paths GET /v1/search/{q} -> Search",
+    "ingest0r-com-openapi.json: tagged paths GET /v1/parcel/{pin} -> Parcel",
+    "ingest0r-com-openapi.json: tagged paths GET /v1/dossier/{pin} -> Dossier",
+    "ingest0r-com-openapi.json: tagged paths GET /v1/comps/{pin} -> Comps",
+    "ingest0r-com-openapi.json: declared missing tag: Comps",
+    "ingest0r-com-openapi.json: declared missing tag: Dossier",
+    "ingest0r-com-openapi.json: declared missing tag: Parcel",
+    "ingest0r-com-openapi.json: declared missing tag: Search",
+    "ingest0r-com-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "ingest0r-com-openapi.yml: tagged paths GET /v1/search/{q} -> Search",
+    "ingest0r-com-openapi.yml: tagged paths GET /v1/parcel/{pin} -> Parcel",
+    "ingest0r-com-openapi.yml: tagged paths GET /v1/dossier/{pin} -> Dossier",
+    "ingest0r-com-openapi.yml: tagged paths GET /v1/comps/{pin} -> Comps",
+    "ingest0r-com-openapi.yml: declared missing tag: Comps",
+    "ingest0r-com-openapi.yml: declared missing tag: Dossier",
+    "ingest0r-com-openapi.yml: declared missing tag: Parcel",
+    "ingest0r-com-openapi.yml: declared missing tag: Search",
+    "tag 'Comps' spans 2 source specs (ingest0r-com-openapi.json, ingest0r-com-openapi.yml): per-path servers applied",
+    "tag 'Dossier' spans 2 source specs (ingest0r-com-openapi.json, ingest0r-com-openapi.yml): per-path servers applied",
+    "tag 'Parcel' spans 2 source specs (ingest0r-com-openapi.json, ingest0r-com-openapi.yml): per-path servers applied",
+    "tag 'Search' spans 2 source specs (ingest0r-com-openapi.json, ingest0r-com-openapi.yml): per-path servers applied",
+    "apis.yml register: written (+4 apis, 5 total)"
+  ],
+  "skipped": []
+}

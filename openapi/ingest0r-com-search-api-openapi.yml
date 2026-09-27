@@ -1,0 +1,204 @@
+openapi: 3.2.0
+info:
+  title: Ingest0r Com Search API
+  version: 0.4.2
+  contact:
+    url: https://api.ingest0r.com
+    email: hyperionxmota@gmail.com
+  x-guidance: 'Resolve a street address to a parcel PIN with GET /v1/search/{q} — search is FREE, no payment needed. Then fetch the full record with GET /v1/dossier/{pin}. Use /v1/parcel/{pin} for a cheap single lookup and /v1/comps/{pin} for comparable sales. The PIN routes are pay-per-call via x402 (USDC on Base or Solana) and return HTTP 402 with machine-readable payment terms until paid. Try GET /v1/sample FIRST — it is FREE and returns a representative response so you can validate the data shape before paying. You do not need a wallet to evaluate this API: search and the sample cost nothing, and the free live example PINs listed at https://api.ingest0r.com/pricing return real records on the normal paid routes at $0. The same data is available as an MCP server (streamable-http) at https://api.ingest0r.com/mcp if your client speaks MCP rather than plain HTTP. Coverage is Cook County, Illinois (including the City of Chicago) ONLY; data is property-keyed public records — no personal, owner, or occupant data.'
+  x-keywords:
+  - cook county
+  - chicago
+  - illinois
+  - property records
+  - real estate
+  - parcel
+  - PIN
+  - address lookup
+  - address to PIN
+  - property tax
+  - assessment
+  - recorded sales
+  - deed history
+  - building permits
+  - comparable sales
+  - comps
+  - automated valuation
+  - due diligence
+  - lead enrichment
+  - title research
+  - open data
+  - x402
+  - pay per call
+  - evanston
+  - oak park
+  - cicero
+  - skokie
+  - berwyn
+  - des plaines
+  - arlington heights
+  - palatine
+  - schaumburg
+  - orland park
+  - tinley park
+  - oak lawn
+  - suburban cook county
+  - assessed value
+  - assessor
+  - cook county assessor
+  - board of review
+  - AVM
+  - home value
+  - last sold price
+  - sale history
+  - permit history
+  - building permit lookup
+  - renovation history
+  - pin lookup
+  - cook county pin
+  - geocode
+  - latitude longitude
+  - property research
+  - real estate investor
+  - underwriting
+  - ward
+  - census tract
+  x-rate-limit:
+    requests_per_minute: 120
+  description: 'Operations tagged Search across 2 of this provider''s published API definitions: ingest0r-com-openapi.json, ingest0r-com-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.ingest0r.com
+tags:
+- name: Search
+paths:
+  /v1/search/{q}:
+    get:
+      operationId: v1_search
+      summary: Address → PIN lookup for Cook County / Chicago
+      description: 'Address → PIN lookup for Cook County / Chicago. Resolve a full or partial STREET ADDRESS to its parcel PIN(s): ranked candidate parcels with address, city, ZIP, a match score and a match_quality flag (exact | likely | weak | none) — resolving the address-to-parcel gap (the raw parcel dataset has no address). The entry point when you have an address but not a PIN — call this before /v1/dossier, /v1/parcel, or /v1/comps. Public assessor records. FREE — no payment required (the PIN routes are pay-per-call).'
+      parameters:
+      - name: q
+        in: path
+        required: true
+        description: Street address or partial (4+ chars), e.g. '1 E 113th St'. A trailing city/state/ZIP is fine and is stripped ('1 E 113th St, Chicago, IL 60628').
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.00'
+          currency: USD
+        protocols:
+        - x402: {}
+        x-free: true
+      responses:
+        '200':
+          description: Free result — no payment required.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  normalized:
+                    type: string
+                    description: the street portion actually matched
+                  match_quality:
+                    type: string
+                    description: exact | likely | weak | none. Only 'exact' is certain; 'weak' means no candidate shares the house number - do not rely on it
+                  matches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pin:
+                          type: string
+                        prop_address:
+                          type: string
+                        prop_city:
+                          type: string
+                        prop_zip:
+                          type: string
+                        exact:
+                          type: boolean
+                        score:
+                          type: number
+                          description: 0-1 address similarity
+              example:
+                query: 7645 W Howard St, Chicago, IL 60631
+                normalized: 7645 W HOWARD ST
+                match_quality: exact
+                matches:
+                - pin: 09253060510000
+                  prop_address: 7645 W HOWARD ST
+                  prop_city: CHICAGO
+                  prop_zip: '60631'
+                  score: 1.0
+                  exact: true
+        '400':
+          description: query_too_short — send at least 4 characters of a street address.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: query_too_short
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s) and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+      tags:
+      - Search
+    servers:
+    - url: https://api.ingest0r.com
+x-refined-from:
+- ingest0r-com-openapi.json
+- ingest0r-com-openapi.yml
+x-payment:
+  protocol: x402
+  x402Version: 2
+  accepts:
+  - scheme: exact
+    network: eip155:8453
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    currency: USDC
+    payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+  - scheme: exact
+    network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+    asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    currency: USDC
+    payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF

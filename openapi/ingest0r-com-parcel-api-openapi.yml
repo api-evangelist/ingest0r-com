@@ -1,0 +1,247 @@
+openapi: 3.2.0
+info:
+  title: Ingest0r Com Parcel API
+  version: 0.4.2
+  contact:
+    url: https://api.ingest0r.com
+    email: hyperionxmota@gmail.com
+  x-guidance: 'Resolve a street address to a parcel PIN with GET /v1/search/{q} — search is FREE, no payment needed. Then fetch the full record with GET /v1/dossier/{pin}. Use /v1/parcel/{pin} for a cheap single lookup and /v1/comps/{pin} for comparable sales. The PIN routes are pay-per-call via x402 (USDC on Base or Solana) and return HTTP 402 with machine-readable payment terms until paid. Try GET /v1/sample FIRST — it is FREE and returns a representative response so you can validate the data shape before paying. You do not need a wallet to evaluate this API: search and the sample cost nothing, and the free live example PINs listed at https://api.ingest0r.com/pricing return real records on the normal paid routes at $0. The same data is available as an MCP server (streamable-http) at https://api.ingest0r.com/mcp if your client speaks MCP rather than plain HTTP. Coverage is Cook County, Illinois (including the City of Chicago) ONLY; data is property-keyed public records — no personal, owner, or occupant data.'
+  x-keywords:
+  - cook county
+  - chicago
+  - illinois
+  - property records
+  - real estate
+  - parcel
+  - PIN
+  - address lookup
+  - address to PIN
+  - property tax
+  - assessment
+  - recorded sales
+  - deed history
+  - building permits
+  - comparable sales
+  - comps
+  - automated valuation
+  - due diligence
+  - lead enrichment
+  - title research
+  - open data
+  - x402
+  - pay per call
+  - evanston
+  - oak park
+  - cicero
+  - skokie
+  - berwyn
+  - des plaines
+  - arlington heights
+  - palatine
+  - schaumburg
+  - orland park
+  - tinley park
+  - oak lawn
+  - suburban cook county
+  - assessed value
+  - assessor
+  - cook county assessor
+  - board of review
+  - AVM
+  - home value
+  - last sold price
+  - sale history
+  - permit history
+  - building permit lookup
+  - renovation history
+  - pin lookup
+  - cook county pin
+  - geocode
+  - latitude longitude
+  - property research
+  - real estate investor
+  - underwriting
+  - ward
+  - census tract
+  x-rate-limit:
+    requests_per_minute: 120
+  description: 'Operations tagged Parcel across 2 of this provider''s published API definitions: ingest0r-com-openapi.json, ingest0r-com-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.ingest0r.com
+tags:
+- name: Parcel
+paths:
+  /v1/parcel/{pin}:
+    get:
+      operationId: v1_parcel
+      summary: 'Single Cook County, IL parcel record by PIN: street address, city, ZIP…'
+      description: 'Single Cook County, IL parcel record by PIN: street address, city, ZIP, assessor property class, township, neighborhood, ward/municipality, census tract, school districts, walkability and airport-noise context, and lat/lon — with the street address joined in (the raw parcel dataset has none). The cheap single-property lookup. Source: Cook County Assessor, refreshed nightly.'
+      parameters:
+      - name: pin
+        in: path
+        required: true
+        description: Cook County PIN, 10 or 14 digits, dashes ok (14-08-120-017-0000). Only have an address? /v1/search first.
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.01'
+          currency: USD
+        protocols:
+        - x402:
+            x402Version: 2
+            payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            accepts:
+            - scheme: exact
+              network: eip155:8453
+              asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+              currency: USDC
+              payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            - scheme: exact
+              network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+              asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+              currency: USDC
+              payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF
+            asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+            network: eip155:8453
+      responses:
+        '200':
+          description: Paid result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pin:
+                    type: string
+                  prop_address:
+                    type: string
+                  prop_city:
+                    type: string
+                  prop_zip:
+                    type: string
+                  class:
+                    type: string
+                  township_name:
+                    type: string
+                  nbhd_code:
+                    type: string
+                  tax_year:
+                    type: integer
+                  lat:
+                    type: number
+                  lon:
+                    type: number
+                  municipality:
+                    type: string
+                  ward:
+                    type: string
+                  police_district:
+                    type: string
+                  census_tract_geoid:
+                    type: string
+                  school_elementary_district:
+                    type: string
+                  school_secondary_district:
+                    type: string
+                  walk_score_cmap:
+                    type: number
+                  airport_noise_dnl:
+                    type: number
+              example:
+                pin: 09253060510000
+                prop_address: 7645 W HOWARD ST
+                prop_city: CHICAGO
+                prop_zip: '60631'
+                class: '203'
+                township_name: Jefferson
+                nbhd_code: '71361'
+                municipality: CITY OF CHICAGO
+                ward: '41'
+                tax_year: 2026
+                lat: 42.0184
+                lon: -87.8181
+        '402':
+          description: 'Payment required (x402): pay per the returned challenge and retry the request.'
+        '400':
+          description: invalid_pin — PIN must be 14 digits (or the 10-digit form, dashed or not).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: invalid_pin
+        '404':
+          description: not_found — well-formed PIN that is not in the Cook County parcel universe (coverage is Cook County only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: not_found
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s) and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+      tags:
+      - Parcel
+    servers:
+    - url: https://api.ingest0r.com
+x-refined-from:
+- ingest0r-com-openapi.json
+- ingest0r-com-openapi.yml
+x-payment:
+  protocol: x402
+  x402Version: 2
+  accepts:
+  - scheme: exact
+    network: eip155:8453
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    currency: USDC
+    payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+  - scheme: exact
+    network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+    asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    currency: USDC
+    payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF

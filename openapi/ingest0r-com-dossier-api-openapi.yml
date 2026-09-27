@@ -1,0 +1,277 @@
+openapi: 3.2.0
+info:
+  title: Ingest0r Com Dossier API
+  version: 0.4.2
+  contact:
+    url: https://api.ingest0r.com
+    email: hyperionxmota@gmail.com
+  x-guidance: 'Resolve a street address to a parcel PIN with GET /v1/search/{q} — search is FREE, no payment needed. Then fetch the full record with GET /v1/dossier/{pin}. Use /v1/parcel/{pin} for a cheap single lookup and /v1/comps/{pin} for comparable sales. The PIN routes are pay-per-call via x402 (USDC on Base or Solana) and return HTTP 402 with machine-readable payment terms until paid. Try GET /v1/sample FIRST — it is FREE and returns a representative response so you can validate the data shape before paying. You do not need a wallet to evaluate this API: search and the sample cost nothing, and the free live example PINs listed at https://api.ingest0r.com/pricing return real records on the normal paid routes at $0. The same data is available as an MCP server (streamable-http) at https://api.ingest0r.com/mcp if your client speaks MCP rather than plain HTTP. Coverage is Cook County, Illinois (including the City of Chicago) ONLY; data is property-keyed public records — no personal, owner, or occupant data.'
+  x-keywords:
+  - cook county
+  - chicago
+  - illinois
+  - property records
+  - real estate
+  - parcel
+  - PIN
+  - address lookup
+  - address to PIN
+  - property tax
+  - assessment
+  - recorded sales
+  - deed history
+  - building permits
+  - comparable sales
+  - comps
+  - automated valuation
+  - due diligence
+  - lead enrichment
+  - title research
+  - open data
+  - x402
+  - pay per call
+  - evanston
+  - oak park
+  - cicero
+  - skokie
+  - berwyn
+  - des plaines
+  - arlington heights
+  - palatine
+  - schaumburg
+  - orland park
+  - tinley park
+  - oak lawn
+  - suburban cook county
+  - assessed value
+  - assessor
+  - cook county assessor
+  - board of review
+  - AVM
+  - home value
+  - last sold price
+  - sale history
+  - permit history
+  - building permit lookup
+  - renovation history
+  - pin lookup
+  - cook county pin
+  - geocode
+  - latitude longitude
+  - property research
+  - real estate investor
+  - underwriting
+  - ward
+  - census tract
+  x-rate-limit:
+    requests_per_minute: 120
+  description: 'Operations tagged Dossier across 2 of this provider''s published API definitions: ingest0r-com-openapi.json, ingest0r-com-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.ingest0r.com
+tags:
+- name: Dossier
+paths:
+  /v1/dossier/{pin}:
+    get:
+      operationId: v1_dossier
+      summary: 'Complete Cook County / Chicago property record in one call: parcel basics PLUS…'
+      description: 'Complete Cook County / Chicago property record in one call: parcel basics PLUS recorded sales & deed history, building permits, and property-tax assessment history, joined and normalized, with neighborhood/ward/school/walkability context. Permits are LINKED to the PIN (the raw permit feed has none) — one finished record, not raw rows to stitch. For due diligence, valuation, underwriting. Nightly-fresh; no personal data.'
+      parameters:
+      - name: pin
+        in: path
+        required: true
+        description: Cook County PIN, 10 or 14 digits, dashes ok (14-08-120-017-0000). Only have an address? /v1/search first.
+        schema:
+          type: string
+      x-payment-info:
+        price:
+          mode: fixed
+          amount: '0.03'
+          currency: USD
+        protocols:
+        - x402:
+            x402Version: 2
+            payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            accepts:
+            - scheme: exact
+              network: eip155:8453
+              asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+              currency: USDC
+              payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+            - scheme: exact
+              network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+              asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+              currency: USDC
+              payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF
+            asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+            network: eip155:8453
+      responses:
+        '200':
+          description: Paid result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pin:
+                    type: string
+                  prop_address:
+                    type: string
+                  class:
+                    type: string
+                  municipality:
+                    type: string
+                  ward:
+                    type: string
+                  sales_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                        price:
+                          type: number
+                        doc_no:
+                          type: string
+                        deed_type:
+                          type: string
+                  permits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        issued:
+                          type: string
+                        type:
+                          type: string
+                        cost:
+                          type: number
+                        desc:
+                          type: string
+                  assessment_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        year:
+                          type: integer
+                        certified:
+                          type: number
+                        board:
+                          type: number
+                        mailed:
+                          type: number
+                        stage:
+                          type: string
+                          description: pending|mailed|certified|board
+                  assessment_note:
+                    type: string
+                    description: ASSESSED values, not market value or tax owed
+              example:
+                pin: 09253060510000
+                prop_address: 7645 W HOWARD ST
+                prop_city: CHICAGO
+                prop_zip: '60631'
+                class: '203'
+                municipality: CITY OF CHICAGO
+                ward: '41'
+                sales_history:
+                - date: '2014-08-01'
+                  price: 385000.0
+                  doc_no: '1423956016'
+                  deed_type: Warranty
+                permits:
+                - issued: '2020-12-15'
+                  type: PERMIT - EASY PERMIT PROCESS
+                  cost: 24149.0
+                  desc: SOLAR PANEL PERMIT
+                assessment_history:
+                - year: 2025
+                  certified: 42001.0
+                  board: 42001.0
+                  mailed: 42001.0
+                  stage: board
+        '402':
+          description: 'Payment required (x402): pay per the returned challenge and retry the request.'
+        '400':
+          description: invalid_pin — PIN must be 14 digits (or the 10-digit form, dashed or not).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: invalid_pin
+        '404':
+          description: not_found — well-formed PIN that is not in the Cook County parcel universe (coverage is Cook County only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: not_found
+        '429':
+          description: rate_limited — per-IP limit; honor the Retry-After header (60s) and retry.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: rate_limited
+        '503':
+          description: busy — capacity shed, retryable; honor Retry-After (2s). Not a failure of the request itself.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: stable machine-readable code
+                  detail:
+                    type: string
+                    description: how to fix the request, in prose
+              example:
+                error: busy
+      tags:
+      - Dossier
+    servers:
+    - url: https://api.ingest0r.com
+x-refined-from:
+- ingest0r-com-openapi.json
+- ingest0r-com-openapi.yml
+x-payment:
+  protocol: x402
+  x402Version: 2
+  accepts:
+  - scheme: exact
+    network: eip155:8453
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+    currency: USDC
+    payTo: '0x98D530C0667A4B18e692F182DdCAb1c2bECb5B9B'
+  - scheme: exact
+    network: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp
+    asset: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    currency: USDC
+    payTo: G3qr8ahZnuFSYjvrCYM4LLDdoLzFq8Boq9XrURVcA9YF
