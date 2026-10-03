@@ -1,11 +1,11 @@
 openapi: 3.2.0
 info:
-  title: Ingest0r Com Comps API
+  title: Cook County (Chicago) property records Comps API
   version: 0.4.2
+  description: Pay-per-call property-records API for Cook County, Illinois — including the City of Chicago.
   contact:
     url: https://api.ingest0r.com
     email: hyperionxmota@gmail.com
-  x-guidance: 'Resolve a street address to a parcel PIN with GET /v1/search/{q} — search is FREE, no payment needed. Then fetch the full record with GET /v1/dossier/{pin}. Use /v1/parcel/{pin} for a cheap single lookup and /v1/comps/{pin} for comparable sales. The PIN routes are pay-per-call via x402 (USDC on Base or Solana) and return HTTP 402 with machine-readable payment terms until paid. Try GET /v1/sample FIRST — it is FREE and returns a representative response so you can validate the data shape before paying. You do not need a wallet to evaluate this API: search and the sample cost nothing, and the free live example PINs listed at https://api.ingest0r.com/pricing return real records on the normal paid routes at $0. The same data is available as an MCP server (streamable-http) at https://api.ingest0r.com/mcp if your client speaks MCP rather than plain HTTP. Coverage is Cook County, Illinois (including the City of Chicago) ONLY; data is property-keyed public records — no personal, owner, or occupant data.'
   x-keywords:
   - cook county
   - chicago
@@ -65,7 +65,7 @@ info:
   - census tract
   x-rate-limit:
     requests_per_minute: 120
-  description: 'Operations tagged Comps across 2 of this provider''s published API definitions: ingest0r-com-openapi.json, ingest0r-com-openapi.yml. Each path carries the servers of the definition it was published in.'
+  x-guidance: 'Resolve a street address to a parcel PIN with GET /v1/search/{q} — search is FREE, no payment needed. Then fetch the full record with GET /v1/dossier/{pin}. Use /v1/parcel/{pin} for a cheap single lookup and /v1/comps/{pin} for comparable sales. The PIN routes are pay-per-call via x402 (USDC on Base or Solana) and return HTTP 402 with machine-readable payment terms until paid. Try GET /v1/sample FIRST — it is FREE and returns a representative response so you can validate the data shape before paying. You do not need a wallet to evaluate this API: search and the sample cost nothing, and the free live example PINs listed at https://api.ingest0r.com/pricing return real records on the normal paid routes at $0. The same data is available as an MCP server (streamable-http) at https://api.ingest0r.com/mcp if your client speaks MCP rather than plain HTTP. Coverage is Cook County, Illinois (including the City of Chicago) ONLY; data is property-keyed public records — no personal, owner, or occupant data.'
 servers:
 - url: https://api.ingest0r.com
 tags:
@@ -226,11 +226,6 @@ paths:
                 error: busy
       tags:
       - Comps
-    servers:
-    - url: https://api.ingest0r.com
-x-refined-from:
-- ingest0r-com-openapi.json
-- ingest0r-com-openapi.yml
 x-payment:
   protocol: x402
   x402Version: 2
