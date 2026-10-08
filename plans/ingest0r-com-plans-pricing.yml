@@ -73,3 +73,50 @@ terms:
 price_history:
 - {date: '2026-07-17', change: '/v1/search became free (was $0.01)', source: changelog.json 0.4.0}
 - {date: '2026-08-19', change: 'Daily free allowance of 25 paid-route calls added; prices unchanged', source: changelog.json 0.4.2}
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - free
+  - metered
+  - subscription
+  units: []
+  plans:
+  - name: Address search (always free)
+    access: other
+    model: free
+    model_how: derived
+    units: []
+    periods:
+    - other
+  - name: Daily free allowance on the PIN routes
+    access: other
+    model: metered
+    model_how: derived
+    units: []
+    periods:
+    - other
+  - name: Parcel record
+    access: other
+    model: subscription
+    model_how: derived
+    units:
+    - other
+    periods:
+    - other
+  - name: Property dossier
+    access: other
+    model: subscription
+    model_how: derived
+    units:
+    - other
+    periods:
+    - other
+  - name: Comparable sales / valuation
+    access: other
+    model: subscription
+    model_how: derived
+    units:
+    - other
+    periods:
+    - other
