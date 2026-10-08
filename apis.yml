@@ -29,7 +29,6 @@ tags:
 - Public Records
 - Open Data
 - Government Data
-- Parcel
 - Geocoding
 - Property Tax
 - Building Permits
@@ -42,6 +41,7 @@ tags:
 - Agent-Native
 - Chicago
 - Illinois
+- Land Parcels
 tags_raw:
 - Company
 - Real Estate
@@ -50,7 +50,6 @@ tags_raw:
 - Public Records
 - Open Data
 - Government Data
-- Parcels
 - Geocoding
 - Property Tax
 - Building Permits
@@ -64,6 +63,7 @@ tags_raw:
 - Chicago
 - Illinois
 - Real-Estate
+- Land Parcels
 apis:
 - aid: ingest0r-com:cook-county-property-records-mcp-server
   name: Cook County (Chicago) Property Records MCP Server
@@ -341,3 +341,5 @@ x-a2a:
   grade: "near-conformant"
   protocol_version: "0.3.0"
   control: 404
+x-tags-removed:
+- Parcel
