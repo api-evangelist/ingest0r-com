@@ -10,41 +10,45 @@ server:
   name: cook-county-chicago-property-data
   version: 1.27.2
   transport: http
-  transport_detail: streamable-http (JSON-RPC 2.0 over HTTP POST; GET with Accept text/event-stream opens the server-to-client SSE stream)
+  transport_detail: streamable-http (JSON-RPC 2.0 over HTTP POST; GET with Accept text/event-stream opens
+    the server-to-client SSE stream)
   url: https://api.ingest0r.com/mcp
   protocol_version: '2025-11-25'
   website_url: https://api.ingest0r.com
   capabilities:
-    tools: {listChanged: false}
-    prompts: {listChanged: false}
-    resources: {subscribe: false, listChanged: false}
-  instructions_excerpt: >-
-    "Call get_free_sample FIRST ($0) to see every response shape. Resolve a street address to a PIN with
-    search_chicago_property_by_address (FREE), then call get_cook_county_property_dossier ($0.03), get_cook_county_parcel
-    ($0.01), or find_chicago_comparable_sales ($0.10). ... you do NOT need a wallet, an API key or a signup ... the
-    first 25 calls per client per day to the PIN tools return real data for free ... Only after that allowance is
-    used up do the paid tools return a 402, which is surfaced verbatim so an x402 client (USDC on Base/Solana) can
-    pay and retry."
+    tools:
+      listChanged: false
+    prompts:
+      listChanged: false
+    resources:
+      subscribe: false
+      listChanged: false
+  instructions_excerpt: '"Call get_free_sample FIRST ($0) to see every response shape. Resolve a street
+    address to a PIN with search_chicago_property_by_address (FREE), then call get_cook_county_property_dossier
+    ($0.03), get_cook_county_parcel ($0.01), or find_chicago_comparable_sales ($0.10). ... you do NOT
+    need a wallet, an API key or a signup ... the first 25 calls per client per day to the PIN tools return
+    real data for free ... Only after that allowance is used up do the paid tools return a 402, which
+    is surfaced verbatim so an x402 client (USDC on Base/Solana) can pay and retry."'
 deployment:
   mode: remote
   endpoint: https://api.ingest0r.com/mcp
   install: null
   package: null
   auth: none
-  auth_detail: >-
-    No OAuth, no API key, no session credential. tools/list and initialize answered anonymously. Paid tools
-    (parcel, dossier, comps) are free for the first 25 calls per client per day; past that the tool result is an
-    x402 402 under _meta["x402/error"] (isError) and the tool accepts a signed payment via _meta["x402/payment"]
-    with the settle receipt in _meta["x402/payment-response"] (changelog 0.4.1, agents-SDK x402 convention).
-    No OAuth discovery documents are served (/.well-known/oauth-authorization-server and oauth-protected-resource
-    both 404), which is consistent with a credential-free server.
+  auth_detail: No OAuth, no API key, no session credential. tools/list and initialize answered anonymously.
+    Paid tools (parcel, dossier, comps) are free for the first 25 calls per client per day; past that
+    the tool result is an x402 402 under _meta["x402/error"] (isError) and the tool accepts a signed payment
+    via _meta["x402/payment"] with the settle receipt in _meta["x402/payment-response"] (changelog 0.4.1,
+    agents-SDK x402 convention). No OAuth discovery documents are served (/.well-known/oauth-authorization-server
+    and oauth-protected-resource both 404), which is consistent with a credential-free server.
   verified: probed
   evidence:
   - method: POST initialize
     url: https://api.ingest0r.com/mcp
     http_status: 200
     content_type: text/event-stream
-    note: 'protocolVersion 2025-11-25; serverInfo {name cook-county-chicago-property-data, version 1.27.2, websiteUrl https://api.ingest0r.com}; no Mcp-Session-Id header issued.'
+    note: protocolVersion 2025-11-25; serverInfo {name cook-county-chicago-property-data, version 1.27.2,
+      websiteUrl https://api.ingest0r.com}; no Mcp-Session-Id header issued.
   - method: POST tools/list
     url: https://api.ingest0r.com/mcp
     http_status: 200
@@ -53,7 +57,8 @@ deployment:
   - method: GET (no Accept text/event-stream)
     url: https://api.ingest0r.com/mcp
     http_status: 200
-    note: JSON self-description {ok, service, transport streamable-http, endpoint, how_to_connect, tools[], free, docs}.
+    note: JSON self-description {ok, service, transport streamable-http, endpoint, how_to_connect, tools[],
+      free, docs}.
   - url: https://api.ingest0r.com/.well-known/mcp.json
     http_status: 200
     note: servers[0] {name, description, transport streamable-http, url https://api.ingest0r.com/mcp}.
@@ -65,43 +70,126 @@ tool_count: 5
 tools:
 - name: get_free_sample
   title: Free sample of the Chicago / Cook County property data ($0)
-  description: Fixed, representative example of every response shape (address search, parcel, dossier, comps). Always free, unlimited.
-  input_schema: {type: object, properties: {}}
-  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true}
-  price: '$0.00'
+  description: Fixed, representative example of every response shape (address search, parcel, dossier,
+    comps). Always free, unlimited.
+  input_schema:
+    type: object
+    properties: {}
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+    openWorldHint: true
+  price: $0.00
   source_operation: null
-  note: Backed by GET /v1/sample, which the OpenAPI does not describe (the agent card lists it as skill v1_sample).
+  note: Backed by GET /v1/sample, which the OpenAPI does not describe (the agent card lists it as skill
+    v1_sample).
 - name: search_chicago_property_by_address
   title: Chicago / Cook County address to parcel PIN (always free)
-  description: Resolve a full or partial Cook County street address to ranked parcel PIN candidates with match_quality (exact | likely | weak | none).
-  input_schema: {type: object, required: [address], properties: {address: {type: string}}}
-  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true}
-  price: '$0.00'
+  description: Resolve a full or partial Cook County street address to ranked parcel PIN candidates with
+    match_quality (exact | likely | weak | none).
+  input_schema:
+    type: object
+    required:
+    - address
+    properties:
+      address:
+        type: string
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+    openWorldHint: true
+  price: $0.00
   source_operation: openapi/ingest0r-com-openapi.yml#v1_search
 - name: get_cook_county_parcel
   title: Cook County parcel record (25 free a day)
-  description: Single parcel record by PIN with the street address joined in, assessor class, township, ward, census tract, schools, walkability, airport noise, lat/lon.
-  input_schema: {type: object, required: [pin], properties: {pin: {type: string}}}
-  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true}
-  price: '$0.01'
+  description: Single parcel record by PIN with the street address joined in, assessor class, township,
+    ward, census tract, schools, walkability, airport noise, lat/lon.
+  input_schema:
+    type: object
+    required:
+    - pin
+    properties:
+      pin:
+        type: string
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+    openWorldHint: true
+  price: $0.01
   source_operation: openapi/ingest0r-com-openapi.yml#v1_parcel
 - name: get_cook_county_property_dossier
   title: Cook County property dossier (25 free a day)
-  description: Full property record — parcel basics plus recorded sales and deed history, building permits linked to the PIN, and assessment history.
-  input_schema: {type: object, required: [pin], properties: {pin: {type: string}}}
-  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true}
-  price: '$0.03'
+  description: Full property record — parcel basics plus recorded sales and deed history, building permits
+    linked to the PIN, and assessment history.
+  input_schema:
+    type: object
+    required:
+    - pin
+    properties:
+      pin:
+        type: string
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+    openWorldHint: true
+  price: $0.03
   source_operation: openapi/ingest0r-com-openapi.yml#v1_dossier
 - name: find_chicago_comparable_sales
   title: Chicago comparable sales / AVM (25 free a day)
-  description: Arm's-length comparable sales in the same assessor neighborhood and class over 18 months (widening automatically in thin markets) with an implied low/median/high valuation range.
-  input_schema: {type: object, required: [pin], properties: {pin: {type: string}}}
-  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true}
-  price: '$0.10'
+  description: Arm's-length comparable sales in the same assessor neighborhood and class over 18 months
+    (widening automatically in thin markets) with an implied low/median/high valuation range.
+  input_schema:
+    type: object
+    required:
+    - pin
+    properties:
+      pin:
+        type: string
+  annotations:
+    readOnlyHint: true
+    destructiveHint: false
+    idempotentHint: true
+    openWorldHint: true
+  price: $0.10
   source_operation: openapi/ingest0r-com-openapi.yml#v1_comps
 free_tier:
   calls_per_day: 25
-  applies_to: [get_cook_county_parcel, get_cook_county_property_dossier, find_chicago_comparable_sales]
-  always_free: [get_free_sample, search_chicago_property_by_address, 'example PINs 09253060510000, 09253140190000, 09253050270000']
+  applies_to:
+  - get_cook_county_parcel
+  - get_cook_county_property_dossier
+  - find_chicago_comparable_sales
+  always_free:
+  - get_free_sample
+  - search_chicago_property_by_address
+  - example PINs 09253060510000, 09253140190000, 09253050270000
   resets: 00:00 UTC
   signal: metered free answers report what is left under _free_tier in the tool result
+tool_quality:
+  tool_count: 5
+  tokens_total: 1555
+  tokens_per_tool_median: 325
+  heavy_tools: []
+  heavy_tool_count: 0
+  params_total: 4
+  params_undescribed: 0
+  params_described_pct: 100.0
+  tools_with_undescribed_params: 0
+  tools_annotated: 5
+  annotated_pct: 100.0
+  state_changing_unhinted: []
+  tools_missing_schema: 0
+  short_descriptions: 0
+  duplicate_descriptions: 0
+  duplicate_names: 0
+  nonportable_names: []
+  output_schema_count: 0
+  token_estimate: chars/3.6 of each compact tool definition
+  source: mcp/ingest0r-com-tools-list.json
+  measured: '2026-10-20'
+  scored: false
+  note: Facts from the saved tools/list capture (mcp_tool_quality.py); recorded, not scored. Checks learned
+    from Glimind's agent-readiness audit.
