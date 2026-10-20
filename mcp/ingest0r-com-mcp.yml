@@ -69,9 +69,22 @@ tools_file: ingest0r-com-tools-list.json
 tool_count: 5
 tools:
 - name: get_free_sample
+  description: 'FREE ($0, unlimited, no payment, no wallet): a fixed, representative
+
+    example of every response shape this server returns for Cook County /
+
+    Chicago property data — address search, parcel, dossier (recorded sales,
+
+    building permits, assessment history) and comparable sales. Call this
+
+    FIRST to validate the data structure before anything else. For REAL
+
+    verified data at $0, call get_cook_county_property_dossier with one of
+
+    the always-free example PINs 09253060510000, 09253140190000,
+
+    09253050270000.'
   title: Free sample of the Chicago / Cook County property data ($0)
-  description: Fixed, representative example of every response shape (address search, parcel, dossier,
-    comps). Always free, unlimited.
   input_schema:
     type: object
     properties: {}
@@ -85,9 +98,28 @@ tools:
   note: Backed by GET /v1/sample, which the OpenAPI does not describe (the agent card lists it as skill
     v1_sample).
 - name: search_chicago_property_by_address
+  description: 'ALWAYS FREE, unlimited, no wallet and no signup. Resolve a Cook County
+
+    / Chicago street address (full or partial) to its parcel PIN(s) — ranked
+
+    candidates with address, city, ZIP, a match score and a match_quality
+
+    flag. A trailing city/state/ZIP is fine (''1 E 113th St, Chicago, IL
+
+    60628''). CHECK match_quality: ''exact'' is certain, ''likely'' shares the
+
+    house number, and ''weak'' means NO candidate matched the house number —
+
+    do not rely on a weak hit. Call this FIRST when you have an address but
+
+    not a PIN, then pass a returned pin to get_cook_county_parcel /
+
+    get_cook_county_property_dossier / find_chicago_comparable_sales.
+
+    Coverage: Cook County, Illinois — Chicago plus 100+ suburbs including
+
+    Evanston, Oak Park, Cicero and Skokie.'
   title: Chicago / Cook County address to parcel PIN (always free)
-  description: Resolve a full or partial Cook County street address to ranked parcel PIN candidates with
-    match_quality (exact | likely | weak | none).
   input_schema:
     type: object
     required:
@@ -103,9 +135,24 @@ tools:
   price: $0.00
   source_operation: openapi/ingest0r-com-openapi.yml#v1_search
 - name: get_cook_county_parcel
+  description: 'FREE for your first 100 calls each day — no wallet, no signup, just
+
+    call it ($0.01 per call via x402/USDC only after that daily allowance,
+
+    which resets at 00:00 UTC). Cook County, IL parcel record for a 10- or
+
+    14-digit PIN. Returns: pin, prop_address, prop_city, prop_zip, class,
+
+    township_name, nbhd_code, municipality, ward, police_district,
+
+    census_tract_geoid, school_elementary_district,
+
+    school_secondary_district, walk_score_cmap, airport_noise_dnl, lat, lon,
+
+    tax_year. The cheap single-property lookup — use
+
+    get_cook_county_property_dossier for sales, permits and assessments.'
   title: Cook County parcel record (25 free a day)
-  description: Single parcel record by PIN with the street address joined in, assessor class, township,
-    ward, census tract, schools, walkability, airport noise, lat/lon.
   input_schema:
     type: object
     required:
@@ -121,9 +168,28 @@ tools:
   price: $0.01
   source_operation: openapi/ingest0r-com-openapi.yml#v1_parcel
 - name: get_cook_county_property_dossier
+  description: 'FREE for your first 100 calls each day — no wallet, no signup, just
+
+    call it ($0.03 per call via x402/USDC only after that daily allowance,
+
+    which resets at 00:00 UTC). Full Cook County / Chicago property dossier
+
+    for a PIN: parcel basics, recorded sales & deed history, building
+
+    permits, property-tax assessment history, and neighborhood / ward /
+
+    school / walkability context — the one-call due-diligence record.
+
+    Permits are LINKED to the PIN here (the raw permit open-data has no PIN;
+
+    links are derived by address + geo match), so this is a finished record
+
+    you cannot reproduce with raw open-data queries. Note assessment values
+
+    are ASSESSED values (~10% of market for most residential classes), not
+
+    market prices — see assessment_note in the response.'
   title: Cook County property dossier (25 free a day)
-  description: Full property record — parcel basics plus recorded sales and deed history, building permits
-    linked to the PIN, and assessment history.
   input_schema:
     type: object
     required:
@@ -139,9 +205,24 @@ tools:
   price: $0.03
   source_operation: openapi/ingest0r-com-openapi.yml#v1_dossier
 - name: find_chicago_comparable_sales
+  description: 'FREE for your first 100 calls each day — no wallet, no signup, just
+
+    call it ($0.10 per call via x402/USDC only after that daily allowance,
+
+    which resets at 00:00 UTC). Recent arm''s-length comparable sales (comps)
+
+    in the same Cook County assessor neighborhood and property class as the
+
+    given PIN, each with its distance in metres from the subject, plus an
+
+    implied low/median/high price range — a derived, lightweight automated
+
+    valuation (AVM) you won''t get from a raw open-data query. Thin markets
+
+    widen automatically and the response reports which matching rung was
+
+    used. Comps are NOT normalized for building size or age.'
   title: Chicago comparable sales / AVM (25 free a day)
-  description: Arm's-length comparable sales in the same assessor neighborhood and class over 18 months
-    (widening automatically in thin markets) with an implied low/median/high valuation range.
   input_schema:
     type: object
     required:
@@ -193,3 +274,4 @@ tool_quality:
   scored: false
   note: Facts from the saved tools/list capture (mcp_tool_quality.py); recorded, not scored. Checks learned
     from Glimind's agent-readiness audit.
+tools_count: 5
